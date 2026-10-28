@@ -198,11 +198,11 @@ try {
   }
 
   for (const [project, expected] of [
-    [{ files: [], packageJson: { dependencies: { next: '16' } } }, { library: 'shadcn', source: 'default' }],
+    [{ files: [], packageJson: { dependencies: { next: '16' } } }, { library: 'none', source: 'default' }],
     [{ files: ['components.json'], packageJson: {} }, { library: 'shadcn', source: 'detected' }],
     [{ files: [], packageJson: { dependencies: { '@mui/material': '7' } } }, { library: 'mui', source: 'detected' }],
     [{ files: [], packageJson: { devDependencies: { vuetify: '3' } } }, { library: 'vuetify', source: 'detected' }],
-    [{ files: ['manage.py'] }, { library: 'shadcn', source: 'default' }]
+    [{ files: ['manage.py'] }, { library: 'none', source: 'default' }]
   ]) {
     const got = detectUiLibrary(project);
     if (got.library !== expected.library || got.source !== expected.source) {
@@ -360,7 +360,7 @@ try {
   }
 
   const features = JSON.parse(await readFile(path.join(repo, 'feature_list.json'), 'utf8'));
-  if (features.approvalMode !== 'supervised' || features.integrationBranch !== 'main' || features.branchPattern !== 'feature/<short-desc>' || features.uiLibrary !== 'shadcn') {
+  if (features.approvalMode !== 'supervised' || features.integrationBranch !== 'main' || features.branchPattern !== 'feature/<short-desc>' || features.uiLibrary !== 'none') {
     throw new Error(`default scaffold config is wrong (got ${JSON.stringify({ ...features, tasks: undefined })})`);
   }
   for (const name of ['overview-plan.md', 'plan.md', 'ui-build.md']) {
@@ -395,6 +395,9 @@ try {
   if (!uiGuide.includes('### Working from a design') || !uiGuide.includes('Never guess at a design you can')) {
     throw new Error('ui-build.md must define precedence and fidelity for working from a design');
   }
+  if (!agents.includes('ask which to use as a **separate** question') || !agents.includes('never bundle the component library')) {
+    throw new Error('AGENTS.md must ask the library question separately from visual direction, with shadcn recommended');
+  }
   if (!agents.includes('Compose from the component library')) {
     throw new Error('AGENTS.md must tell agents to compose from uiLibrary instead of hand-building');
   }
@@ -425,13 +428,13 @@ try {
   const flagged = path.join(tempRoot, 'flagged');
   const flaggedRun = runNode(createScript, [
     '--target', flagged, '--approval-mode', 'autopilot', '--integration-branch', 'origin/develop',
-    '--branch-pattern', 'users/<username>/<short-desc>', '--pr-host', 'gitlab', '--ui-library', 'none', '--agent-file', 'CLAUDE.md'
+    '--branch-pattern', 'users/<username>/<short-desc>', '--pr-host', 'gitlab', '--ui-library', 'hand-built', '--agent-file', 'CLAUDE.md'
   ]);
   if (flaggedRun.status !== 0) throw new Error(`workhorse-create.mjs with flags failed: ${flaggedRun.stderr}`);
   const flaggedFeatures = JSON.parse(await readFile(path.join(flagged, 'feature_list.json'), 'utf8'));
   if (flaggedFeatures.approvalMode !== 'autopilot' || flaggedFeatures.integrationBranch !== 'develop'
     || flaggedFeatures.branchPattern !== 'users/<username>/<short-desc>' || flaggedFeatures.prHost !== 'gitlab'
-    || flaggedFeatures.uiLibrary !== 'none') {
+    || flaggedFeatures.uiLibrary !== 'hand-built') {
     throw new Error(`workhorse-create.mjs did not honour its flags (got ${JSON.stringify({ ...flaggedFeatures, tasks: undefined })})`);
   }
   if (!(await readFile(path.join(flagged, 'CLAUDE.md'), 'utf8')).startsWith('# CLAUDE.md')) {

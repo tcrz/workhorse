@@ -166,8 +166,8 @@
     "uiLibrary": {
       "type": "string",
       "minLength": 1,
-      "default": "shadcn",
-      "description": "Component library for UI work. 'shadcn' (default) means the shadcn family in the flavour for the stack — shadcn/ui, shadcn-vue, shadcn-svelte, spartan/ui, shadcn-solid, or Basecoat. 'none' means the human opted out and components are hand-built. Any other value names the library the project already uses (e.g. 'mui'). Detected at scaffold; the human can change it in natural language. See .harness/templates/ui-build.md."
+      "default": "none",
+      "description": "Component library for UI work. 'none' means the project has no component library yet: the first time a request builds UI, the planner asks which to use, recommending the shadcn family in the flavour for the stack, and writes the answer here. 'shadcn' means the shadcn family — shadcn/ui, shadcn-vue, shadcn-svelte, spartan/ui, shadcn-solid, or Basecoat. 'hand-built' means the human opted out of component libraries. Any other value names the library the project already uses (e.g. 'mui'). Detected at scaffold. See .harness/templates/ui-build.md."
     },
     "prHost": {
       "type": "string",

@@ -3,7 +3,8 @@ import { chmod, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import {
   DEFAULT_BRANCH_PATTERN,
-  DEFAULT_UI_LIBRARY,
+  HAND_BUILT_UI_LIBRARY,
+  RECOMMENDED_UI_LIBRARY,
   PR_HOSTS,
   assertIntegrationBranch,
   buildFeatureList,
@@ -27,7 +28,7 @@ import {
 const args = parseArgs(process.argv.slice(2));
 
 if (args.help) {
-  console.log(`Usage: node scripts/workhorse-create.mjs [--target DIR] [--approval-mode autopilot|supervised] [--integration-branch NAME] [--branch-pattern PATTERN] [--pr-host github|gitlab|azure|none] [--ui-library shadcn|none|NAME] [--agent-file AGENTS.md|CLAUDE.md] [--package-manager npm|pnpm|yarn|bun] [--commands "cmd one,cmd two"] [--force]
+  console.log(`Usage: node scripts/workhorse-create.mjs [--target DIR] [--approval-mode autopilot|supervised] [--integration-branch NAME] [--branch-pattern PATTERN] [--pr-host github|gitlab|azure|none] [--ui-library none|shadcn|hand-built|NAME] [--agent-file AGENTS.md|CLAUDE.md] [--package-manager npm|pnpm|yarn|bun] [--commands "cmd one,cmd two"] [--force]
 
 Creates a minimal production harness:
   AGENTS.md or CLAUDE.md
@@ -46,8 +47,9 @@ Options:
   --branch-pattern      Feature branch naming convention. Default: ${DEFAULT_BRANCH_PATTERN}
   --ui-library          Component library for UI work. Default: the library the project already
                         uses (MUI, Chakra, …, or shadcn when components.json exists), else
-                        "${DEFAULT_UI_LIBRARY}" — the shadcn family, picked per stack. "none" opts out
-                        and has UI built by hand.
+                        "none" — no library yet; the planner asks at the first UI work and
+                        recommends "${RECOMMENDED_UI_LIBRARY}" (the shadcn family, picked per stack).
+                        "${HAND_BUILT_UI_LIBRARY}" opts out of component libraries.
   --pr-host             Override PR host detection. Default: derived from the origin remote at
                         runtime (not written unless passed).
   --commands            Comma-separated static-check and build commands, replacing detection.

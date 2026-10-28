@@ -144,10 +144,14 @@ export function detectPrHost(remoteUrl) {
   return 'none';
 }
 
-export const DEFAULT_UI_LIBRARY = 'shadcn';
+// `none` = no component library in the project yet; the planner asks at the first UI
+// work, recommending RECOMMENDED_UI_LIBRARY. `hand-built` = the human opted out.
+export const DEFAULT_UI_LIBRARY = 'none';
+export const RECOMMENDED_UI_LIBRARY = 'shadcn';
+export const HAND_BUILT_UI_LIBRARY = 'hand-built';
 
 // Component libraries recognised from package.json, checked in order. When a project
-// already uses one, it wins over the shadcn default: never add a second UI library.
+// already uses one, it's recorded as-is: never add a second UI library.
 const UI_LIBRARY_PACKAGES = [
   ['@mui/material', 'mui'],
   ['@chakra-ui/react', 'chakra'],
@@ -169,9 +173,8 @@ const UI_LIBRARY_PACKAGES = [
 ];
 
 /**
- * The project's UI component library: one it already uses, else the shadcn default.
- * `shadcn` means the shadcn family — the stack picks the flavour (shadcn/ui, shadcn-vue,
- * shadcn-svelte, spartan/ui, shadcn-solid, Basecoat); `none` means hand-built components.
+ * The project's UI component library: one it already uses, else `none` (no library yet —
+ * the planner asks, recommending the shadcn family for the stack).
  * @returns {{ library: string, source: 'detected' | 'default' }}
  */
 export function detectUiLibrary(project) {
@@ -605,9 +608,9 @@ export function validateFeatureList(parsed, options = {}) {
   }
 
   if (parsed.uiLibrary === undefined) {
-    warnings.push(`uiLibrary missing — set the project's component library ("${DEFAULT_UI_LIBRARY}" by default, "none" to hand-build)`);
+    warnings.push(`uiLibrary missing — set the project's component library ("none" until one is chosen, "${RECOMMENDED_UI_LIBRARY}", "${HAND_BUILT_UI_LIBRARY}", or the library the project uses)`);
   } else if (typeof parsed.uiLibrary !== 'string' || !parsed.uiLibrary.trim()) {
-    warnings.push(`uiLibrary should be a non-empty string ("${DEFAULT_UI_LIBRARY}", "none", or the library the project uses)`);
+    warnings.push(`uiLibrary should be a non-empty string ("none", "${RECOMMENDED_UI_LIBRARY}", "${HAND_BUILT_UI_LIBRARY}", or the library the project uses)`);
   }
 
   if (parsed.prHost !== undefined && !PR_HOSTS.includes(parsed.prHost)) {
@@ -1402,7 +1405,7 @@ export async function buildUpgradePlan(target) {
   const willChange = [agentFile, '.harness/manifest.json', '.harness/templates/ (plan templates and UI build guide refreshed)'];
   if (approvalModeMissing) willChange.push('feature_list.json (approvalMode merge)');
   if (branchPatternMissing) willChange.push(`feature_list.json (branchPattern merge — ${DEFAULT_BRANCH_PATTERN})`);
-  if (uiLibraryMissing) willChange.push('feature_list.json (uiLibrary merge — detected library, else shadcn)');
+  if (uiLibraryMissing) willChange.push('feature_list.json (uiLibrary merge — detected library, else none)');
   if (integrationBranchMissing) {
     willChange.push('feature_list.json (integrationBranch — from --integration-branch, else origin/HEAD)');
   }

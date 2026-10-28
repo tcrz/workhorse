@@ -2,6 +2,14 @@
 
 Every change that should reach installed users gets a version bump here and in `.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`, and `skills/workhorse/metadata.json` — Claude Code keeps users on a pinned version until it changes. The self-test fails when they disagree.
 
+## 1.2.0 — 2026-10-28
+
+### Changed
+
+- **Choosing a component library is its own question.** With no library detected, `uiLibrary` is now `none` — *not chosen yet*, not an opt-out. At the first request that builds UI, the planner asks which to use, separately from the visual-direction question: the shadcn flavour for the stack first and recommended, another established library if one fits, and hand-built components last as an explicit opt-out. The answer is written to `uiLibrary`.
+- Opting out of component libraries is now `hand-built` (previously `none`).
+- The visual-direction question covers the look only; its options never decide the component library.
+
 ## 1.1.0 — 2026-10-28
 
 ### UI building

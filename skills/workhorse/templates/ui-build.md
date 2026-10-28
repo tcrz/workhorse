@@ -86,7 +86,8 @@ In the feature plan's **UI design** section:
 
 `feature_list.json` → **`uiLibrary`** names the library:
 
-- **`shadcn`** (default) — the shadcn family, in the flavour that matches the stack:
+- **`none`** — the project has no component library yet. Before the first UI work, ask the human which to use, as a question of its own (see below). Write the answer here.
+- **`shadcn`** — the shadcn family, in the flavour that matches the stack:
 
   | Stack | Use |
   |---|---|
@@ -98,10 +99,20 @@ In the feature plan's **UI design** section:
   | Anything else — server-rendered templates, plain HTML, htmx, Rails, Django, Laravel | **Basecoat** — basecoatui.com |
 
   All of them are built on Tailwind CSS: if the project doesn't have it, the foundation task adds it. Components are added through each flavour's CLI and land in the repo as source you own — customise them through theme tokens and variants, not by rewriting them, unless matching an approved design needs more (see *Working from a design*).
-- **`none`** — the human opted out: build components by hand, following the rest of this guide.
+- **`hand-built`** — the human opted out of component libraries: build components by hand, following the rest of this guide.
 - **Any other value** (`mui`, `chakra`, `mantine`, `vuetify`, …) — the library this project already uses. Compose from it; don't add shadcn alongside it.
 
-The human can change it at any time — *"don't use shadcn"*, *"use MUI"* — and the agent writes the new value to `feature_list.json`. Adding a **second** UI library, or swapping the existing one, always needs the human's approval.
+### Choosing a library (`uiLibrary` is `none`)
+
+Ask once, at the first request that builds UI — in Phase 1, before any plan is approved. It is **its own question**, never folded into the visual-direction question: how the app looks and what it's built from are independent choices. Offer, in this order:
+
+1. **The shadcn flavour for the stack** — named concretely (*"shadcn/ui"* for Next.js, *"shadcn-vue"* for Nuxt, …) — marked **(Recommended)**.
+2. **Another established library**, when the stack has an obvious alternative or the human has mentioned one.
+3. **Hand-built components** — last, labelled as opting out of a library. Never recommended.
+
+Write the answer to `uiLibrary` (`shadcn`, the library's name, or `hand-built`) and name it in the overview's **Components** line.
+
+The human can change it at any time — *"don't use shadcn"*, *"use MUI"*, *"hand-build it"* — and the agent writes the new value to `feature_list.json`. Adding a **second** UI library, or swapping the existing one, always needs the human's approval.
 
 ## 4. Take stock before building
 

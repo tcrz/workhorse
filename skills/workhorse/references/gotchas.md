@@ -476,7 +476,7 @@ registry.register('shell', {
 
 **Cause**: "Compose from what exists" only looked at components already in the repo. In a greenfield app there were none, and "no new library without approval" made the planner avoid proposing one — so composing quietly became building everything.
 
-**Fix**: `feature_list.json` → `uiLibrary` (default `shadcn`, the shadcn flavour for the stack; an existing library is detected and kept; `none` opts out). Never hand-build what the library ships. The overview names the library so the human sees it at approval. See `.harness/templates/ui-build.md` section 3.
+**Fix**: `feature_list.json` → `uiLibrary`: an existing library is detected and kept; with none yet (`none`), the planner asks once as a separate question — never bundled into the visual direction — recommending the shadcn flavour for the stack, with hand-building as the last, explicit opt-out (`hand-built`). Never hand-build what the library ships. The overview names the library so the human sees it at approval. See `.harness/templates/ui-build.md` section 3.
 
 ---
 
