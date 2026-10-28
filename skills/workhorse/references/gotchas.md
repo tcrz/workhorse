@@ -486,7 +486,7 @@ registry.register('shell', {
 
 **Cause**: Nothing said which wins when the design and the harness's own UI opinions disagree, and every departure from the design was a warning.
 
-**Fix**: Precedence — accessibility, then the design, then the design system, then craft rules and the design pass, which only fill gaps. An approved design is binding on structure: the planner writes its structural elements into acceptance criteria, so departures fail review; cosmetic departures stay warnings. Deliberate departures are recorded in the plan with a reason. See *Working from a design* in `.harness/templates/ui-build.md`.
+**Fix**: Precedence — accessibility, then the design, then the design system, then craft rules and the design pass, which only fill gaps. An approved design is binding on structure: the planner writes its structural elements into acceptance criteria, so departures fail review; cosmetic departures stay warnings. Deliberate departures are recorded in the plan with a reason, and accessibility changes to the design are named in the commit overview and PR. Gaps — things the design doesn't show — are listed under **Design gaps** at plan approval and filled with behaviour, never new content; big gaps are asked about first. See *Working from a design* in `.harness/templates/ui-build.md`.
 
 ---
 

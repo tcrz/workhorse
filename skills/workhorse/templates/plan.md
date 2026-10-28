@@ -55,6 +55,7 @@ Feature-scoped flow — routes/handlers/functions the request/data flows through
 
 - **Focal point:** <the single thing the screen leads with>
 - **States:** loading — <…>; empty — <…>; error — <…>; partial — <…>
+- **Design gaps** (design file or mockup): <what the design doesn't show — e.g. empty state, error state, phone layout, loading> — <how it'll be handled in the design's style | waiting on the design>. Write "none" if the design covers everything.
 - **Design departures** (approved design only): <what differs from the design> — <reason> — <approved by the human | accessibility fix>. Write "none" if the build matches.
 
 ## Files to touch

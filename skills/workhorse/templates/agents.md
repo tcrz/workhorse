@@ -146,7 +146,7 @@ Each question: non-empty prompt, header ≤ 12 characters, 2–4 options with la
 Every implementation request is delegated to a **planning subagent** using the **Resumable Coordinator** pattern: zero context on dispatch, context preserved across resumes. **If the `workhorse-planner` subagent is available** (Workhorse plugin installed), dispatch it — its no-write tool restrictions are set in its definition, and it runs on the session's model. Otherwise spawn a general subagent with no file-editing work in its brief. Either way, **this file is the planner's rulebook**: the subagent reads the sections listed below itself, so don't paste them into the prompt.
 
 - **Phase 1 — Overall plan.** From the raw request, produce `.harness/plans/overview.md` (template: `.harness/templates/overview-plan.md` — goal, mermaid flow, feature split, cross-cutting concerns, assumptions, risks). Present it, iterate elicitation rounds, and get explicit approval (`status: draft → approved`, stamp `approvedAt`). Phase 2 does not run until approval.
-- **Phase 2 — Per-feature plans.** Produce `.harness/plans/feat-NNN.md` per feature (template: `.harness/templates/plan.md`): overview, **acceptance criteria (required)**, flow diagram, **UI design** (UI features — design source or reference research, purpose, layout, focal point, states, per `.harness/templates/ui-build.md`; with an approved design, its structural elements also become acceptance criteria), files to touch, data flow, behaviour checks, interface contracts, **task specs**, sequencing, risks.
+- **Phase 2 — Per-feature plans.** Produce `.harness/plans/feat-NNN.md` per feature (template: `.harness/templates/plan.md`): overview, **acceptance criteria (required)**, flow diagram, **UI design** (UI features — design source or reference research, purpose, layout, focal point, states, per `.harness/templates/ui-build.md`; with an approved design, its structural elements also become acceptance criteria, and its gaps are listed under **Design gaps**), files to touch, data flow, behaviour checks, interface contracts, **task specs**, sequencing, risks.
 
 **Naming.** With the plugin, the subagent is `workhorse-planner`. Without it, give a general subagent the visible label `Harness Planner` when the spawn tool has a description field; otherwise put `Role: harness-planner` at the top of the prompt. **Resume is always keyed by the subagent ID** captured at dispatch — never re-spawn by name or label.
 
@@ -316,7 +316,7 @@ Steps 1–3 run **per task**. Steps 4–11 run **once per feature**.
 
 1. **Implement** — scope complete for this row, guided by its task spec in the plan. **UI tasks:** follow `.harness/templates/ui-build.md` — take stock of existing components and tokens, build in its order, and run its look-while-building screenshot loop against the plan's design source. Two skills are part of this step, not optional extras:
    - **Components through the library.** When `uiLibrary` is `shadcn` on a React stack, use the **`shadcn`** skill to set up the library (in the foundation feature) and to add and compose every component. Other shadcn flavours: use that flavour's CLI and docs. Never hand-write a component the library ships.
-   - **Design pass.** Before setting the row `verified`, invoke the **`emil-design-eng`** skill on the screens the task touched — interaction feel, transitions on overlays and state changes, feedback on actions, easing and timing — and apply what it finds. With a design source, it only fills what the design doesn't specify; the design wins (see *Working from a design* in the guide).
+   - **Design pass.** Before setting the row `verified`, invoke the **`emil-design-eng`** skill on the screens the task touched — interaction feel, transitions on overlays and state changes, feedback on actions, easing and timing — and apply what it finds. With a design source, it only decides the gaps the plan lists — functional motion and feedback, never decoration — and the design wins (see *Working from a design* in the guide).
    - **Trace.** Record one line per UI task in `progress.md` → **Active feature**: which components came from the library, and `design pass: done` — or `skipped` with the reason.
 2. **Fast gate** — `node init.mjs` passes.
 3. **Conventions check** — reconcile the change with the project's documented conventions (`CONTRIBUTING.md`, `docs/`, lint/format config, patterns in neighbouring code); fix divergences. Then set the row `verified` and return to step 1 for the next task.
@@ -343,6 +343,7 @@ In **`autopilot`**, the passing verification stack authorizes the commit — pre
 - **What changed** — files grouped by task, each with a short purpose (no raw diff)
 - **Static checks** — fast gate result
 - **Independent review** — the Reviewer's verdict and confirmation trail summary (*"7/7 criteria observed"*). If the human accepted unobserved behaviour, name the unobserved criteria and why, in plain words (*"behaviour not verified for 3 criteria: payment sandbox unreachable — accepted by you"*)
+- **Design changes** (UI features with a design source) — any accessibility fix that changed the design, with before and after; omit when there are none
 - **Proposed commit message** — the exact message (see **Commit message format**); the human may edit it
 - **Out of scope / follow-ups** — anything deliberately left
 - **Explicit ask** (`supervised`) — `Approve this commit? (yes / changes requested)`
@@ -487,7 +488,7 @@ Run these with read-only git around them — P.3 already pushed; never commit or
 2. **Ask** (`supervised` only): `Open a pull request? (yes / not yet)`. `not yet`/silence → record `PR status: not opened yet` and stop.
 3. **Target** — `integrationBranch`. Verify `origin/<integrationBranch>` exists (`git fetch --prune`); if it's gone, ask the human and write the new value.
 4. **Title** — the last commit subject, offered for confirmation (`supervised`) or used as-is (`autopilot`) unless the human gave one.
-5. **Body** — features carried (featId + name), their tasks, plan file paths, review verdicts, and any behaviour the human accepted unobserved. Write it to a temp file for `--body-file`.
+5. **Body** — features carried (featId + name), their tasks, plan file paths, review verdicts, any behaviour the human accepted unobserved, and any recorded design departures or accessibility changes to the design. Write it to a temp file for `--body-file`.
 6. **Never** mark draft unless asked; **never** enable auto-merge — merging stays human.
 7. **Record** — `progress.md` → `PR status: opened — PR #<n> → <target> (<url>)`.
 

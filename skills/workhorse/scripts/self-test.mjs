@@ -381,6 +381,10 @@ try {
     throw new Error('AGENTS.md step 1 must require the shadcn and emil-design-eng skills on UI tasks and leave a trace');
   }
   const uiGuide = await readFile(path.join(repo, '.harness', 'templates', 'ui-build.md'), 'utf8');
+  const planTemplate = await readFile(path.join(repo, '.harness', 'templates', 'plan.md'), 'utf8');
+  if (!planTemplate.includes('**Design gaps**') || !uiGuide.includes('decide behaviour, add nothing')) {
+    throw new Error('plans must list design gaps, and the guide must say gaps are behaviour, never new content');
+  }
   if (!uiGuide.includes('### Working from a design') || !uiGuide.includes('Never guess at a design you can')) {
     throw new Error('ui-build.md must define precedence and fidelity for working from a design');
   }

@@ -24,7 +24,7 @@ An **approved design** — a Figma file or mockup the human has signed off — i
 1. Accessibility basics — keyboard access, labels, focus, WCAG AA contrast
 2. The design source
 3. The project's design system and component library
-4. This guide's craft and copy rules, and the `emil-design-eng` design pass — these only **fill gaps the design leaves**: motion, hover and press feedback, states the design doesn't show. Never "fix" something the design specifies.
+4. This guide's craft and copy rules, and the `emil-design-eng` design pass — these only apply to **gaps** (below). Never "fix" something the design specifies.
 
 **How firm the source is decides what a departure costs:**
 
@@ -38,7 +38,7 @@ A **structural** departure means the screen is built differently: a section miss
 
 **Structure becomes acceptance criteria.** With an approved design, the planner writes its structural elements into the feature's acceptance criteria — *"a stats row with four KPIs sits above the orders table"*, *"selecting an order opens a side panel, not a page"* — so the Reviewer holds the build to them, and the human sees exactly what's binding at plan approval.
 
-**Deliberate departures go on record.** When the design can't or shouldn't be followed exactly, list it under **Design departures** in the plan with the reason. Accessibility conflicts (text that fails contrast, a target too small) are fixed without asking; anything else needs the human's approval first. A recorded, approved departure isn't a finding.
+**Deliberate departures go on record.** When the design can't or shouldn't be followed exactly, list it under **Design departures** in the plan with the reason. Accessibility conflicts (text that fails contrast, a target too small) are fixed without asking, but never silently: name each one in the commit overview and the pull request description, with the before and after (*"table metadata colour raised from #9CA3AF to #6B7280 for AA contrast"*). Anything else needs the human's approval first. A recorded, approved departure isn't a finding.
 
 **Figma.**
 - With a **Figma MCP** connected: fetch the frames and the design's variables. Put the variables into the theme tokens, map each element to a `uiLibrary` component, and in the screenshot loop compare a screenshot of the frame with the build at the same width.
@@ -47,7 +47,13 @@ A **structural** departure means the screen is built differently: a section miss
 
 **Fidelity over purity.** When matching the design needs more than theme tokens and variants, modify the library component in place and note why in the plan.
 
-**States the design doesn't show** — designs usually cover the happy path. Build loading, empty, error, and partial states anyway, in the design's visual language.
+**Gaps: decide behaviour, add nothing.** A design is a set of pictures of particular moments; a working screen has to behave in all of them. A **gap** is something the design doesn't show but the screen can't avoid — hover, press and focus feedback; loading, empty, error, and partial states; validation errors; a phone layout when only desktop was designed; content much longer than the mockup's. Left undecided, the code still does *something* — usually no feedback, a blank screen, or a raw error. So gaps get decided, in the design's own visual language.
+
+A gap is **not** licence to add. A section, button, banner, decorative element, or content the design doesn't have is a structural departure, whatever the reason.
+
+- **List the gaps in the plan.** The planner writes them under **Design gaps** in the UI design section, each with how it'll be handled — so the human sees them at plan approval and can redirect (*"use the design system's empty state"*, *"I'll get the mobile frames"*).
+- **Ask before improvising a big gap** — a whole phone layout, an entire screen or flow the design lacks. Ask whether a design is coming before inventing one.
+- **Keep the design pass functional.** With a design source, `emil-design-eng` adds only motion and feedback that help the user understand what happened — a press state, a panel sliding from the side it opens on, a short fade between states. No decorative motion, and nothing that changes the design's character.
 
 ### Reference research (no design to follow)
 
