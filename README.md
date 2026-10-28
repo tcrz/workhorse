@@ -19,8 +19,8 @@ Works with any stack the scaffolder can detect (Node/TypeScript, Python, Go, Rus
 | Component | Path | Purpose |
 |---|---|---|
 | Skill | `skills/workhorse/` | Scaffolding, validation, upgrade, and reporting — plus the templates the harness is built from |
-| Reviewer subagent | `agents/workhorse-reviewer.md` | Checks each feature against its plan by driving the running app. Model pinned; editing tools removed, so read-only is enforced |
-| Planner subagent | `agents/workhorse-planner.md` | Clarifies requests and writes plans with task specs. Model pinned; no write tools |
+| Reviewer subagent | `agents/workhorse-reviewer.md` | Checks each feature against its plan by driving the running app. Uses the session's model; editing tools removed, so read-only is enforced |
+| Planner subagent | `agents/workhorse-planner.md` | Clarifies requests and writes plans with task specs. Uses the session's model; no write tools |
 | Design skills | `skills/emil-design-eng/`, `skills/shadcn/` | Emil Kowalski's design-engineering skill (polish, interaction, animation) and the official shadcn/ui skill (used only in shadcn projects). Vendored unmodified, pinned in `vendor.json` — see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) |
 | Browser | `.mcp.json` (Claude Code), `mcp.json` (Cursor) | Playwright MCP (`@playwright/mcp@0.0.83`, headless, isolated profile) so the Reviewer can observe UI behaviour |
 
@@ -51,7 +51,7 @@ ln -s "$PWD/workhorse" ~/.cursor/plugins/local/workhorse
 
 To publish, submit the repository at cursor.com/marketplace/publish (plugins must be open source and are reviewed before listing).
 
-Cursor reads only `name` and `description` from subagent files, so the pinned model and the read-only tool restriction apply in Claude Code only. In Cursor the Reviewer's read-only rule is enforced by its instructions, not by the tool list.
+Cursor reads only `name` and `description` from subagent files, so the read-only tool restriction applies in Claude Code only. In Cursor the Reviewer's read-only rule is enforced by its instructions, not by the tool list.
 
 ### Standalone skill (other agents)
 

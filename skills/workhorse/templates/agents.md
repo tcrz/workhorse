@@ -143,7 +143,7 @@ Each question: non-empty prompt, header ≤ 12 characters, 2–4 options with la
 
 ### Planning Phase (subagent — two phases)
 
-Every implementation request is delegated to a **planning subagent** using the **Resumable Coordinator** pattern zero context on dispatch, context preserved across resumes. **If the `workhorse-planner` subagent is available** (Workhorse plugin installed), dispatch it — its model and no-write tool restrictions are set in its definition. Otherwise spawn a general subagent on the most capable reasoning model available, with no file-editing work in its brief. Either way, **this file is the planner's rulebook**: the subagent reads the sections listed below itself, so don't paste them into the prompt.
+Every implementation request is delegated to a **planning subagent** using the **Resumable Coordinator** pattern: zero context on dispatch, context preserved across resumes. **If the `workhorse-planner` subagent is available** (Workhorse plugin installed), dispatch it — its no-write tool restrictions are set in its definition, and it runs on the session's model. Otherwise spawn a general subagent with no file-editing work in its brief. Either way, **this file is the planner's rulebook**: the subagent reads the sections listed below itself, so don't paste them into the prompt.
 
 - **Phase 1 — Overall plan.** From the raw request, produce `.harness/plans/overview.md` (template: `.harness/templates/overview-plan.md` — goal, mermaid flow, feature split, cross-cutting concerns, assumptions, risks). Present it, iterate elicitation rounds, and get explicit approval (`status: draft → approved`, stamp `approvedAt`). Phase 2 does not run until approval.
 - **Phase 2 — Per-feature plans.** Produce `.harness/plans/feat-NNN.md` per feature (template: `.harness/templates/plan.md`): overview, **acceptance criteria (required)**, flow diagram, **UI design** (UI features — design source or reference research, purpose, layout, focal point, states, per `.harness/templates/ui-build.md`), files to touch, data flow, behaviour checks, interface contracts, **task specs**, sequencing, risks.
@@ -543,7 +543,7 @@ When the review returns behavioural criteria as `unconfirmed` (the app would not
 
 ### Spawn
 
-- **If the `workhorse-reviewer` subagent is available** (Workhorse plugin installed), dispatch it — its model is pinned and its editing tools are removed, so read-only is enforced. Otherwise spawn a general subagent on the most capable reasoning model available, with the visible label `Harness Reviewer` (or `Role: harness-reviewer` in the prompt), and state the read-only rule in the prompt.
+- **If the `workhorse-reviewer` subagent is available** (Workhorse plugin installed), dispatch it — its editing tools are removed, so read-only is enforced, and it runs on the session's model. Otherwise spawn a general subagent with the visible label `Harness Reviewer` (or `Role: harness-reviewer` in the prompt), and state the read-only rule in the prompt.
 - **This section is the Reviewer's rulebook.** The subagent reads it from this file itself — don't paste it into the prompt.
 - Resumable and self-contained; **capture the subagent ID** and resume it for follow-ups instead of re-spawning.
 - **Return early** if it cannot identify criteria — reviewing against guessed criteria produces confident, wrong rows.

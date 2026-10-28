@@ -1,7 +1,7 @@
 ---
 name: workhorse-planner
 description: Planning subagent for a Workhorse harness. Clarifies an implementation request and produces the overall plan and per-feature plans with acceptance criteria and task specs. Use for every implementation request before any task row or code exists. Resumable — the caller resumes it by agent ID with elicitation answers.
-model: opus
+model: inherit
 disallowedTools: Edit, Write, NotebookEdit
 color: blue
 ---

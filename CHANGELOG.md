@@ -8,7 +8,7 @@ First release of Workhorse, a general-purpose harness plugin for Claude Code and
 
 - Ships as a plugin for **Claude Code** (`.claude-plugin/`) and **Cursor** (`.cursor-plugin/`) from one repository, with a Claude Code marketplace manifest.
 - Bundles **Playwright MCP** (`@playwright/mcp@0.0.83`, headless, isolated) so the Reviewer can always observe UI behaviour.
-- Adds the **`workhorse-reviewer`** and **`workhorse-planner`** subagents with pinned models and editing tools removed (enforced in Claude Code; instruction-level in Cursor). They are thin: their rules live in the harness's `AGENTS.md`, which they read themselves.
+- Adds the **`workhorse-reviewer`** and **`workhorse-planner`** subagents (model inherited from the session) with editing tools removed (enforced in Claude Code; instruction-level in Cursor). They are thin: their rules live in the harness's `AGENTS.md`, which they read themselves.
 - The skill still works standalone from `skills/workhorse/`, falling back to general subagents and a user-connected browser tool.
 
 ### UI building

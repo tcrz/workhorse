@@ -1,7 +1,7 @@
 ---
 name: workhorse-reviewer
 description: Independent read-only reviewer for a Workhorse harness. Checks a finished feature against its plan's acceptance criteria by driving the running app, and against the project's conventions. Use at step 4 of "Completing a feature", or when the human asks to review a feature against its plan. Not for general code review or bug hunting.
-model: opus
+model: inherit
 disallowedTools: Edit, Write, NotebookEdit
 color: orange
 ---

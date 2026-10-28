@@ -31,8 +31,8 @@ Every useful coding-agent harness has five subsystems:
 Workhorse ships as a plugin for **Claude Code** and **Cursor**, and the plugin adds three things this skill relies on:
 
 - a bundled **Playwright browser** MCP server, so the Reviewer can observe UI behaviour;
-- the **`workhorse-reviewer`** subagent — model pinned, editing tools removed, so read-only is enforced;
-- the **`workhorse-planner`** subagent — model pinned, no write tools.
+- the **`workhorse-reviewer`** subagent — editing tools removed, so read-only is enforced;
+- the **`workhorse-planner`** subagent — no write tools.
 
 Used standalone (this folder copied into a skills directory), everything still works, but the generated harness falls back to general subagents, and you must connect a browser tool yourself. Script paths below are relative to this skill's directory.
 
