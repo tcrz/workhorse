@@ -114,6 +114,22 @@ try {
     if (!/@playwright\/mcp@\d+\.\d+\.\d+$/.test(mcp.mcpServers?.playwright?.args?.[1] || '')) {
       throw new Error('the bundled Playwright MCP must be pinned to an exact version');
     }
+    // Vendored skills match their vendor.json pins and carry their upstream license.
+    const vendor = await readJson('vendor.json');
+    for (const entry of vendor.skills) {
+      const dir = path.join(pluginRoot, 'skills', entry.name);
+      const license = await readFile(path.join(dir, 'LICENSE'), 'utf8').catch(() => '');
+      const vendored = await readFile(path.join(dir, 'VENDORED.md'), 'utf8').catch(() => '');
+      const skill = await readFile(path.join(dir, 'SKILL.md'), 'utf8').catch(() => '');
+      if (!skill.includes(`name: ${entry.name}`)) throw new Error(`vendored skill ${entry.name} is missing or misnamed — run tools/sync-vendored-skills.mjs`);
+      if (!license.includes(entry.copyright)) throw new Error(`vendored skill ${entry.name} must ship its upstream LICENSE ("${entry.copyright}")`);
+      if (!vendored.includes(entry.sha)) throw new Error(`vendored skill ${entry.name} doesn't match its vendor.json pin — run tools/sync-vendored-skills.mjs`);
+    }
+    const notices = await readFile(path.join(pluginRoot, 'THIRD_PARTY_NOTICES.md'), 'utf8');
+    for (const entry of vendor.skills) {
+      if (!notices.includes(entry.repo)) throw new Error(`THIRD_PARTY_NOTICES.md must credit ${entry.repo}`);
+    }
+
     // Agent files stay thin: identity + tool limits + a few safety lines + a pointer to
     // the AGENTS.md section that is their rulebook. The rules live in one place.
     const template = await readFile(path.join(skillRoot, 'templates', 'agents.md'), 'utf8');

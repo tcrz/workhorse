@@ -51,6 +51,13 @@ List what the project already has, and compose from it:
 
 Create a new component only when nothing fits, and put it with the shared components, not inside the page. A connected design-system MCP or an installed design skill can help here, but **the project's own design system always wins**. No new UI library without the human's approval.
 
+### Bundled design skills
+
+The Workhorse plugin ships two design skills. Use them where they fit, never against the project's own system:
+
+- **`emil-design-eng`** — polish, interaction feel, and animation decisions. Use it at step 8 (polish), whenever a screen adds motion or transitions, and when judging whether an interaction *feels* right.
+- **`shadcn`** — only when the project already uses shadcn/ui (it has a `components.json`), or when the human chose shadcn/ui as the foundation of a new React + Tailwind app. Never introduce it into a project that has its own component library.
+
 ## 4. Build in this order
 
 1. **Route and shell** — the screen is reachable inside the real layout.

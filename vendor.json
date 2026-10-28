@@ -1,0 +1,20 @@
+{
+  "skills": [
+    {
+      "name": "emil-design-eng",
+      "repo": "emilkowalski/skills",
+      "path": "skills/emil-design-eng",
+      "sha": "2d228630ba1446365f614a108cb8252f1feda202",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2026 Emil Kowalski"
+    },
+    {
+      "name": "shadcn",
+      "repo": "shadcn-ui/ui",
+      "path": "skills/shadcn",
+      "sha": "96da9cc7f1aa10580a3741664e2a77c721206c00",
+      "license": "MIT",
+      "copyright": "Copyright (c) 2023 shadcn"
+    }
+  ]
+}

@@ -16,6 +16,7 @@ First release of Workhorse, a general-purpose harness plugin for Claude Code and
 - New **UI build guide** (`templates/ui-build.md`, copied to `.harness/templates/`): every UI feature builds against a design source — design file (Figma via MCP), mockup, existing screen, or **reference research** (study 2–4 products known for the screen type plus platform guidelines, borrow patterns, never branding, recorded in the plan for approval). Covers visual direction for new products, a foundation feature, take-stock-first, a fixed build order, a required look-while-building screenshot loop, and craft and copy rules.
 - Plans gain a **UI design** section; overviews gain **Visual direction**. The Reviewer fails missing states and accessibility basics, and reports design departures as warnings.
 - Gotcha #42: built a UI from nothing.
+- Bundles two design skills, vendored unmodified and pinned by commit in `vendor.json`: **`emil-design-eng`** (Emil Kowalski — polish, interaction, animation) and the official **`shadcn`** skill (used only in shadcn/ui projects). `tools/sync-vendored-skills.mjs` updates them; licenses and notes in `THIRD_PARTY_NOTICES.md`.
 
 ### Kept
 

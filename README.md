@@ -21,6 +21,7 @@ Works with any stack the scaffolder can detect (Node/TypeScript, Python, Go, Rus
 | Skill | `skills/workhorse/` | Scaffolding, validation, upgrade, and reporting — plus the templates the harness is built from |
 | Reviewer subagent | `agents/workhorse-reviewer.md` | Checks each feature against its plan by driving the running app. Model pinned; editing tools removed, so read-only is enforced |
 | Planner subagent | `agents/workhorse-planner.md` | Clarifies requests and writes plans with task specs. Model pinned; no write tools |
+| Design skills | `skills/emil-design-eng/`, `skills/shadcn/` | Emil Kowalski's design-engineering skill (polish, interaction, animation) and the official shadcn/ui skill (used only in shadcn projects). Vendored unmodified, pinned in `vendor.json` — see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) |
 | Browser | `.mcp.json` (Claude Code), `mcp.json` (Cursor) | Playwright MCP (`@playwright/mcp@0.0.83`, headless, isolated profile) so the Reviewer can observe UI behaviour |
 
 ## Install
@@ -104,9 +105,11 @@ claude plugin validate --strict .
 
 Keep the two plugin manifests (`.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`) and the two MCP files (`.mcp.json`, `mcp.json`) in sync — the self-test checks both.
 
+Vendored skills are never edited in place. To update them, run `node tools/sync-vendored-skills.mjs --update`, review the diff, and commit.
+
 ## Credits
 
-Derived from [learn-harness-engineering](https://github.com/walkinglabs/learn-harness-engineering) (MIT).
+Derived from [learn-harness-engineering](https://github.com/walkinglabs/learn-harness-engineering) (MIT). Bundles [emil-design-eng](https://github.com/emilkowalski/skills) and the [shadcn/ui skill](https://github.com/shadcn-ui/ui/tree/main/skills/shadcn), both MIT — see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## License
 
