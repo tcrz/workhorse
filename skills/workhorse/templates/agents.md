@@ -113,6 +113,8 @@ Clarification is owned by the **planning subagent**. When it hits an unknown it 
 
 **Don't ask** for reversible, low-stakes choices (naming, file location, formatting) — pick a default and note it. **Deliverable-shaping choices** (a surface's fields, flow, post-action, auth integration, data contract) are never "default + note" — clarify them, or list them as **unconfirmed assumptions** and require breakdown approval.
 
+**Visual direction (new UI products).** When the request builds UI and the app has no design system or design source, the look is deliverable-shaping: ask once, in Phase 1, for the brand feel, density, and tone, offering reference products as options (see `.harness/templates/ui-build.md`). It's reused by every screen afterwards.
+
 **Adjacent surface ≠ inherited spec.** Signup after login, edit after create — each is a new triage. Do not copy the prior feature's fields, flow, or auth model unless the human stated them in this request.
 
 **Elicitation form contract:**
@@ -142,7 +144,7 @@ Each question: non-empty prompt, header ≤ 12 characters, 2–4 options with la
 Every implementation request is delegated to a **planning subagent** using the **Resumable Coordinator** pattern zero context on dispatch, context preserved across resumes. **If the `workhorse-planner` subagent is available** (Workhorse plugin installed), dispatch it — its model and no-write tool restrictions are set in its definition. Otherwise spawn a general subagent on the most capable reasoning model available, with no file-editing work in its brief. Either way, **this file is the planner's rulebook**: the subagent reads the sections listed below itself, so don't paste them into the prompt.
 
 - **Phase 1 — Overall plan.** From the raw request, produce `.harness/plans/overview.md` (template: `.harness/templates/overview-plan.md` — goal, mermaid flow, feature split, cross-cutting concerns, assumptions, risks). Present it, iterate elicitation rounds, and get explicit approval (`status: draft → approved`, stamp `approvedAt`). Phase 2 does not run until approval.
-- **Phase 2 — Per-feature plans.** Produce `.harness/plans/feat-NNN.md` per feature (template: `.harness/templates/plan.md`): overview, **acceptance criteria (required)**, flow diagram, files to touch, data flow, behaviour checks, interface contracts, **task specs**, sequencing, risks.
+- **Phase 2 — Per-feature plans.** Produce `.harness/plans/feat-NNN.md` per feature (template: `.harness/templates/plan.md`): overview, **acceptance criteria (required)**, flow diagram, **UI design** (UI features — design source or reference research, purpose, layout, focal point, states, per `.harness/templates/ui-build.md`), files to touch, data flow, behaviour checks, interface contracts, **task specs**, sequencing, risks.
 
 **Naming.** With the plugin, the subagent is `workhorse-planner`. Without it, give a general subagent the visible label `Harness Planner` when the spawn tool has a description field; otherwise put `Role: harness-planner` at the top of the prompt. **Resume is always keyed by the subagent ID** captured at dispatch — never re-spawn by name or label.
 
@@ -155,7 +157,7 @@ Every implementation request is delegated to a **planning subagent** using the *
 - Codebase context: structure, stack, relevant file contents, current `feature_list.json`, and existing project docs
 - How to run the app locally (dev command, URL/port, seed/login steps), so every objective can be written as something the Reviewer can observe
 - Which phase to run, and for Phase 2 the approved `overview.md` path
-- **The rulebook pointer:** read this file's **Request Triage** section — *Clarification policy*, *Planning Phase*, *Task spec content bar*, *Break work down* — plus `.harness/templates/overview-plan.md` and `.harness/templates/plan.md` before starting, and follow them; return content only, the main agent saves it
+- **The rulebook pointer:** read this file's **Request Triage** section — *Clarification policy*, *Planning Phase*, *Task spec content bar*, *Break work down* — plus `.harness/templates/overview-plan.md`, `.harness/templates/plan.md`, and (for UI work) `.harness/templates/ui-build.md` before starting, and follow them; return content only, the main agent saves it
 
 **Full-coverage rule.** Every plan spans the **entire** request. Never produce or offer a partial plan; implementation ordering is decided after breakdown approval (**Where to start**).
 
@@ -275,6 +277,7 @@ The validator enforces evidence emptiness on `in-progress`/`verified`, feature-h
 - **One task at a time** — at most one `in-progress`, even inside a feature
 - **No tests** — the harness writes and runs no tests. Per task: `node init.mjs` (static checks). Per feature: the Reviewer observes behaviour in the running app. Push only: `node init.mjs --build` (build). Never run a production build during feature work
 - **Conventions before done** — reconcile code with the project's own conventions (step 3)
+- **UI from a source, never from nothing** — every UI feature builds against a design source: a design file, a mockup, an existing screen, or reference research recorded in the plan. Follow `.harness/templates/ui-build.md`
 - **Vet dependencies** — before adding or upgrading a dependency, confirm it is maintained and run the package manager's audit; a high/critical finding with no safe version is a hard rail
 - **The Reviewer is the behaviour gate** — step 4 runs once per feature; nothing commits on unobserved behaviour unless the human explicitly accepts it. The at-will Reviewer runs only when the human asks
 - **Approval-gated commit** — `supervised`: commit only after explicit approval; `autopilot`: commit in the same turn once verification passes
@@ -308,7 +311,7 @@ Do not run other build commands on your own during feature work.
 
 Steps 1–3 run **per task**. Steps 4–11 run **once per feature**.
 
-1. **Implement** — scope complete for this row, guided by its task spec in the plan.
+1. **Implement** — scope complete for this row, guided by its task spec in the plan. **UI tasks:** follow `.harness/templates/ui-build.md` — take stock of existing components and tokens, build in its order, and run its look-while-building screenshot loop against the plan's design source.
 2. **Fast gate** — `node init.mjs` passes.
 3. **Conventions check** — reconcile the change with the project's documented conventions (`CONTRIBUTING.md`, `docs/`, lint/format config, patterns in neighbouring code); fix divergences. Then set the row `verified` and return to step 1 for the next task.
 4. **Feature review (once every row is `verified`)** — dispatch the **Reviewer** on the feature's uncommitted work (see **Reviewer** → Rail invocation). A **`fail`** blocks: remediate, re-run, **cap 2 cycles**, then `blocked`. **Unobserved behavioural criteria** block too, until fixed or explicitly accepted by the human (see **Reviewer** → Unobserved behaviour). Carry the verdict into step 5.
@@ -516,7 +519,7 @@ A bare "review this" is ambiguous — ask whether they mean acceptance, PR state
 ### Rail invocation
 
 - **Diff** — `git diff HEAD` (all uncommitted work). If the feature already has commits (a remediation from a prior cycle), add `git diff <featureBaseSha>..HEAD`. A clean working tree is not a no-op. Never `git diff <integrationBranch>...HEAD` — it drags in earlier features on the branch.
-- **Criteria** — the plan's `## Acceptance criteria` plus every task's Objectives in `## Task specs`; each task's **How to observe** steps tell the Reviewer how to exercise them.
+- **Criteria** — the plan's `## Acceptance criteria` plus every task's Objectives in `## Task specs`; each task's **How to observe** steps tell the Reviewer how to exercise them. For UI features, also the plan's **UI design** section and the checks under *What the Reviewer checks* in `.harness/templates/ui-build.md` — missing states and accessibility basics are `fail`; departures from the design source or craft rules are `warn` convention findings.
 - **On `fail`** — map failing criteria to rows, reopen them (`verified` → `in-progress`), fix, re-run the fast gate, re-run the review for the feature. `autopilot`: show the first `fail` report before remediating. `supervised`: ask `Fix review findings and re-run? (yes / not yet)`. Cap 2 cycles, then `blocked`. **A `fail` is never committed over** — there is no `push anyway` at review.
 - **Reviewer wrong?** If the human disagrees with a `fail`, the criterion is what's wrong: update the plan's acceptance criteria or task objectives with the human's explicit agreement, note the change in `progress.md`, and re-run the review. Never edit a criterion on your own to make a review pass.
 - **No criteria at all** → nothing can be verified; treat every behaviour as unobserved (below) with the line *"no acceptance criteria available; nothing was verified against"* — never a silent `pass`.
@@ -608,6 +611,7 @@ droppedMinor?: <count>
 
 - [ ] `node init.mjs` passes
 - [ ] Code reconciled with the project's conventions (step 3)
+- [ ] (UI features) Built against the plan's design source; loading, empty, and error states present; works at phone width; keyboard-reachable and labelled
 - [ ] Feature reviewed once (step 4) with every behavioural criterion **observed** — or the unobserved ones explicitly accepted by the human; `reviewVerdict` recorded on every row; no unremediated `fail`
 - [ ] Commit landed once per feature — `supervised` after explicit approval; `autopilot` in the same turn
 - [ ] `evidence` is exactly `commit <hash>` from `git rev-parse --short HEAD` right after that commit, shared by every row of the feature

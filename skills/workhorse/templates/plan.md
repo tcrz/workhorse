@@ -37,6 +37,25 @@ flowchart LR
 
 Feature-scoped flow — routes/handlers/functions the request/data flows through inside this feature.
 
+## UI design
+
+**UI features only** — delete this section otherwise. Follow `.harness/templates/ui-build.md`.
+
+- **Design source:** <Figma link | mockup | existing screen `path/route` | reference research>
+- **References** (reference research only): <product or guideline> — <pattern borrowed> — <why it fits this user's job>. Two to four entries. Patterns only, never branding.
+- **Purpose:** <who uses this screen> needs to <the one job>.
+- **Layout:**
+
+  ```text
+  ┌ PageHeader: title + primary action ──────────┐
+  │ FilterBar                                    │
+  │ DataTable (focal point)                      │
+  └ Pagination ──────────────────────────────────┘
+  ```
+
+- **Focal point:** <the single thing the screen leads with>
+- **States:** loading — <…>; empty — <…>; error — <…>; partial — <…>
+
 ## Files to touch
 
 | File | What changes | Connections |

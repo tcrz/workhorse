@@ -68,7 +68,8 @@
       "templates/plan.md",
       "templates/plan.schema.json",
       "templates/overview-plan.md",
-      "templates/overview-plan.schema.json"
+      "templates/overview-plan.schema.json",
+      "templates/ui-build.md"
     ]
   }
 }

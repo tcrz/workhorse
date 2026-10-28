@@ -198,7 +198,7 @@ const agentPath = path.join(target, plan.agentFile);
 await writeText(agentPath, plan.renderedContent);
 actions.push({ step: 'agent-file', path: plan.agentFile, mode: plan.upgradeMode });
 
-for (const name of ['overview-plan.md', 'plan.md']) {
+for (const name of ['overview-plan.md', 'plan.md', 'ui-build.md']) {
   await copyTemplate(name, path.join(target, '.harness', 'templates', name), {}, { force: true });
 }
 actions.push({ step: 'plan-templates', path: '.harness/templates/' });

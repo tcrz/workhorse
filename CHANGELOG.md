@@ -11,6 +11,12 @@ First release of Workhorse, a general-purpose harness plugin for Claude Code and
 - Adds the **`workhorse-reviewer`** and **`workhorse-planner`** subagents with pinned models and editing tools removed (enforced in Claude Code; instruction-level in Cursor). They are thin: their rules live in the harness's `AGENTS.md`, which they read themselves.
 - The skill still works standalone from `skills/workhorse/`, falling back to general subagents and a user-connected browser tool.
 
+### UI building
+
+- New **UI build guide** (`templates/ui-build.md`, copied to `.harness/templates/`): every UI feature builds against a design source — design file (Figma via MCP), mockup, existing screen, or **reference research** (study 2–4 products known for the screen type plus platform guidelines, borrow patterns, never branding, recorded in the plan for approval). Covers visual direction for new products, a foundation feature, take-stock-first, a fixed build order, a required look-while-building screenshot loop, and craft and copy rules.
+- Plans gain a **UI design** section; overviews gain **Visual direction**. The Reviewer fails missing states and accessibility basics, and reports design departures as warnings.
+- Gotcha #42: built a UI from nothing.
+
 ### Kept
 
 - Five-subsystem model, scaffolder, validator, upgrader, benchmark, and HTML report.

@@ -322,7 +322,7 @@ try {
   if (features.approvalMode !== 'supervised' || features.integrationBranch !== 'main' || features.branchPattern !== 'feature/<short-desc>') {
     throw new Error(`default scaffold config is wrong (got ${JSON.stringify({ ...features, tasks: undefined })})`);
   }
-  for (const name of ['overview-plan.md', 'plan.md']) {
+  for (const name of ['overview-plan.md', 'plan.md', 'ui-build.md']) {
     const copied = await readFile(path.join(repo, '.harness', 'templates', name), 'utf8').catch(() => '');
     if (!copied.includes('## ')) throw new Error(`scaffold must copy ${name} to .harness/templates/ so AGENTS.md pointers resolve`);
   }
@@ -342,6 +342,9 @@ try {
   }
   if (!agents.includes('### Unobserved behaviour') || !agents.includes('writes and runs **no tests**')) {
     throw new Error('AGENTS.md must make the Reviewer the behaviour gate (no tests, unobserved behaviour blocks)');
+  }
+  if (!agents.includes('.harness/templates/ui-build.md') || !agents.includes('UI from a source, never from nothing')) {
+    throw new Error('AGENTS.md must route UI work through .harness/templates/ui-build.md');
   }
 
   const initFast = spawnSync(process.execPath, [path.join(repo, 'init.mjs')], { cwd: repo, encoding: 'utf8' });

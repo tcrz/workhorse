@@ -1330,7 +1330,7 @@ export async function buildUpgradePlan(target) {
     branchPatternMissing = false;
   }
 
-  const willChange = [agentFile, '.harness/manifest.json', '.harness/templates/ (plan templates refreshed)'];
+  const willChange = [agentFile, '.harness/manifest.json', '.harness/templates/ (plan templates and UI build guide refreshed)'];
   if (approvalModeMissing) willChange.push('feature_list.json (approvalMode merge)');
   if (branchPatternMissing) willChange.push(`feature_list.json (branchPattern merge — ${DEFAULT_BRANCH_PATTERN})`);
   if (integrationBranchMissing) {

@@ -85,6 +85,10 @@ On implementation requests, the agent **must** update `feature_list.json` before
 - **Show always, approve sometimes.** The breakdown is always shown; explicit approval is required for N ≥ 2 features, unconfirmed assumptions, or high-stakes scope.
 - **Feature branch before code.** The branch must match `branchPattern` and never be a protected branch (`main`, `master`, `integrationBranch`).
 
+### Building UI
+
+The harness can't define what every UI should look like, so it defines how to decide. Every UI feature builds against a **design source** — a design file (Figma via MCP when connected), a mockup, an existing screen, or **reference research**: the planner names the screen type, studies 2–4 products known for it plus platform guidelines, and records the borrowed patterns in the plan for approval. New products get one visual-direction question and a foundation feature first. Builders follow a fixed build order and a required screenshot loop at desktop and phone width. All of it lives in `templates/ui-build.md`, copied into each repo at `.harness/templates/ui-build.md`.
+
 ### Feature delivery
 
 Tasks sharing a `featId` are implemented and verified one at a time (each moves to `verified`), then **one independent feature review** runs, then **one commit** lands for the whole feature. Commit messages follow Conventional Commits with a `Tasks: task-001 task-002` trailer. The validator rejects half-committed features.

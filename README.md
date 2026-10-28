@@ -79,6 +79,7 @@ node scripts/workhorse-benchmark.mjs --target /path/to/project --html report.htm
 
 - **Plans before code.** A planning subagent clarifies the request, writes an overall plan for approval, then per-feature plans with acceptance criteria and implementation-ready **task specs**, each with steps to observe it working.
 - **Delivers by feature.** Tasks are verified one at a time and committed together — one Conventional Commit per feature, with a `Tasks:` trailer and the commit hash recorded as evidence.
+- **Builds UI from a source, never from nothing.** Every screen follows a design file, mockup, or existing screen — or, when there's none, patterns researched from products known for that kind of screen, approved in the plan. A fixed build order and a screenshot loop at desktop and phone width keep it honest.
 - **Verifies by observation, not tests.** A read-only Reviewer drives the running app and checks every acceptance criterion before the commit. A failed review is never committed over, and anything it couldn't observe blocks until fixed or explicitly accepted. There is no regression suite — that's the trade-off.
 - **Pushes in batches.** Features are committed as they finish; the quality gate and push run at the end of the queue (or every 4 features).
 - **Two approval modes.** `supervised` asks before every commit, push, and PR; `autopilot` doesn't. Hard rails — failed quality gate, protected branch, vulnerable dependency, unresolved review failure, unobserved behaviour — apply in both.

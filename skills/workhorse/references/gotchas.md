@@ -460,6 +460,16 @@ registry.register('shell', {
 
 ---
 
+## 42. Built a UI From Nothing
+
+**Symptom**: A screen with no design to follow came out generic — a centred card, invented spacing and colours, a layout no product in its category would use — or each screen in the same app looked different.
+
+**Cause**: With no design source, the agent fell back on its own defaults. Nothing told it to find out how good products solve the same screen, and nothing fixed the visual direction once for the whole app.
+
+**Fix**: Every UI feature builds against a **design source** — design file, mockup, existing screen, or **reference research**: name the screen type, study 2–4 products known for it plus platform guidelines, borrow patterns (never branding), and record them in the plan for the human to approve. For a new product, ask the visual direction once in Phase 1 and build a foundation feature first. See `.harness/templates/ui-build.md`.
+
+---
+
 ## Related Reading
 
 - [Memory Persistence Pattern](memory-persistence-pattern.md) — Gotchas #1, #3, #4, #15
@@ -467,3 +477,4 @@ registry.register('shell', {
 - [Multi-agent Pattern](multi-agent-pattern.md) — Gotchas #8, #11, #38, #41
 - [Context Engineering Pattern](context-engineering-pattern.md) — Gotchas #9
 - [Lifecycle Pattern](lifecycle-bootstrap-pattern.md) — Gotchas #10, #14, #31, #33
+- UI build guide (`templates/ui-build.md`) — Gotchas #23, #25, #27, #42

@@ -144,7 +144,7 @@ if (force || !await exists(initShPath)) {
 
 // Plan templates the planning subagent follows. They live in the repo so the
 // AGENTS.md pointers resolve without the skill installed.
-for (const name of ['overview-plan.md', 'plan.md']) {
+for (const name of ['overview-plan.md', 'plan.md', 'ui-build.md']) {
   results.push(await copyTemplate(name, path.join(target, '.harness', 'templates', name), {}, { force }));
 }
 

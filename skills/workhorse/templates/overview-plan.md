@@ -36,6 +36,10 @@ Replace the placeholder with a mermaid diagram of the end-to-end user/data flow 
 - **feat-002 — <name>** _(type: feat)_ — …
 - **feat-003 — <name>** _(type: fix|refactor|chore|…)_ — …
 
+## Visual direction
+
+**UI work only.** Where the screens' look comes from: an existing design system, a design file, or — for a new product — the agreed brand feel, density, and tone plus the reference products the screens will draw on (see `.harness/templates/ui-build.md`). For a new product with no design system, propose a **foundation** feature (tokens, app shell, core components) before any screen.
+
 ## Cross-cutting concerns
 
 - Migrations, auth changes, dependency additions, feature flags — anything that touches multiple features or services.
