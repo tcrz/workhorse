@@ -35,6 +35,8 @@ All implementation happens on a **feature branch** — never directly on a prote
 
 One branch covers the whole request (which may span several features and rows). Establish it once, up front; do **not** re-branch per row.
 
+**Uncommitted harness files.** Right after Workhorse is set up, its files (`{{AGENT_FILE_NAME}}`, `feature_list.json`, `progress.md`, `session-handoff.md`, `init.mjs`, `init.sh`, `.harness/`) are usually uncommitted. On the first feature branch, commit them before any feature work as `chore: set up Workhorse harness` (no `Tasks:` trailer). This needs no approval in either mode — the human already asked for the setup — and keeps them out of the feature's own commit. Never commit them to a protected branch.
+
 **PR target is separate from create base.** Do not infer "branched from X ⇒ PR to X". Feature PRs target `integrationBranch` (resolved at scaffold — see **Pull request**).
 
 ## Approval mode

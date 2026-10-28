@@ -68,11 +68,16 @@ Options:
 - `--commands "cmd one,cmd two"` for custom static checks and builds. Commands that look like builds run only under `--build`.
 - `--force` only after confirming overwrites are acceptable — it resets `feature_list.json` and `progress.md`. Use **Upgrade** for live harnesses.
 
-4. **Check for a browser tool.** The Reviewer can only observe UI behaviour through one. With the Workhorse plugin, the bundled Playwright server provides it. Standalone, confirm one is connected (Playwright MCP, Chrome DevTools MCP); if none is and the project has a UI, tell the user plainly that every UI feature will stop at the unobserved-behaviour ask until one is added.
-5. **Review `init.mjs`** with the user — its `fast` (static checks) and `build` lists should match what CI runs. It runs no tests by design. Edit the lists directly if detection missed something.
-6. **Validate** — `node scripts/workhorse-validate.mjs --target /path/to/project`.
+4. **Check for a browser tool.** The Reviewer can only observe UI behaviour through one. With the Workhorse plugin, the bundled Playwright server provides it — nothing to say. Standalone, confirm one is connected (Playwright MCP, Chrome DevTools MCP).
+5. **Check `init.mjs` yourself** — its `fast` (static checks) and `build` lists should match the project's scripts and CI. Edit them directly if detection missed something. Ask only if you genuinely can't tell.
+6. **Validate** — `node scripts/workhorse-validate.mjs --target /path/to/project`. Fix anything tier-1 before finishing.
+7. **Finish with one short message**, in this shape:
 
-Then explain what was created. `feature_list.json` ships with `approvalMode`, `integrationBranch`, `branchPattern`, and one placeholder task — the **agent** replaces it with real tasks as work arrives; humans prompt in natural language.
+   > Workhorse is set up — supervised mode, pull requests target `main`. What would you like to build?
+
+   That's the whole message. Don't recap the files created, explain how the harness works, describe trade-offs, or ask about committing — the harness files are committed automatically with the first feature. Add a sentence only for something that needs the user: validation still failing, or a UI project with no browser tool available.
+
+`feature_list.json` ships with `approvalMode`, `integrationBranch`, `branchPattern`, and one placeholder task — the agent replaces it with real tasks as work arrives; humans prompt in natural language.
 
 ### Request triage
 
@@ -103,7 +108,7 @@ Tasks sharing a `featId` are implemented and verified one at a time (each moves 
 2. **Behaviour** — the Reviewer observes every behavioural criterion in the running app, once per feature (see below).
 3. **Quality gate** — `node init.mjs --build`: fast gate + build. Push gate only. A non-zero exit aborts the push; only an explicit later `push anyway` overrides.
 
-Trade-off to tell the user: there is no regression suite, so a later feature can break an earlier one unnoticed until a human or the project's own CI catches it. If the project's CI runs tests, the optional CI watch after a push surfaces those failures.
+Trade-off (documented in the README, not something to announce): there is no regression suite, so a later feature can break an earlier one unnoticed until a human or the project's own CI catches it. If the project's CI runs tests, the optional CI watch after a push surfaces those failures.
 
 **Evidence** on a `done` row is exactly `commit <hash>` — from `git rev-parse --short HEAD` immediately after the feature commit, shared by every row of the feature. Nothing after the hash.
 
