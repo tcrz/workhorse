@@ -163,6 +163,12 @@
       "default": "feature/<short-desc>",
       "description": "Feature branch naming convention. Placeholders: <short-desc> (kebab-case summary), <username> (local-part of git user.email). See AGENTS.md **Branch Discipline**."
     },
+    "uiLibrary": {
+      "type": "string",
+      "minLength": 1,
+      "default": "shadcn",
+      "description": "Component library for UI work. 'shadcn' (default) means the shadcn family in the flavour for the stack — shadcn/ui, shadcn-vue, shadcn-svelte, spartan/ui, shadcn-solid, or Basecoat. 'none' means the human opted out and components are hand-built. Any other value names the library the project already uses (e.g. 'mui'). Detected at scaffold; the human can change it in natural language. See .harness/templates/ui-build.md."
+    },
     "prHost": {
       "type": "string",
       "enum": [

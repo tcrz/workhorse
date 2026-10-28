@@ -83,6 +83,7 @@ The harness takes over from there. It asks clarifying questions, shows you a pla
 | *"stop after this one"* | Finishes the current feature, then pushes |
 | *"review feat-002 against the plan"* | Runs the Reviewer on demand |
 | *"more like Linear"* (at plan approval) | Redirects the UI references for a screen |
+| *"don't use shadcn"* / *"use MUI"* | Changes the component library for this repo |
 
 **Keep the harness healthy**
 
@@ -98,6 +99,7 @@ In Claude Code you can also invoke it directly with `/workhorse:workhorse`.
 
 - **Plans before code.** A planning subagent clarifies the request, writes an overall plan for approval, then per-feature plans with acceptance criteria and implementation-ready **task specs**, each with steps to observe it working.
 - **Delivers by feature.** Tasks are verified one at a time and committed together — one Conventional Commit per feature, with a `Tasks:` trailer and the commit hash recorded as evidence.
+- **Composes UI from a component library.** shadcn by default, in the flavour for your stack, or the library you already use — never hand-building a button or dialog the library ships. Opt out any time.
 - **Builds UI from a source, never from nothing.** Every screen follows a design file, mockup, or existing screen — or, when there's none, patterns researched from products known for that kind of screen, approved in the plan. A fixed build order and a screenshot loop at desktop and phone width keep it honest.
 - **Verifies by observation, not tests.** A read-only Reviewer drives the running app and checks every acceptance criterion before the commit. A failed review is never committed over, and anything it couldn't observe blocks until fixed or explicitly accepted. There is no regression suite — that's the trade-off.
 - **Pushes in batches.** Features are committed as they finish; the quality gate and push run at the end of the queue (or every 4 features).
@@ -110,6 +112,7 @@ In Claude Code you can also invoke it directly with `/workhorse:workhorse`.
 | `approvalMode` | `supervised` | `supervised` or `autopilot` |
 | `integrationBranch` | remote default branch | PR target; treated as protected |
 | `branchPattern` | `feature/<short-desc>` | Feature branch convention (`<short-desc>`, `<username>`) |
+| `uiLibrary` | detected, else `shadcn` | Component library for UI. `shadcn` uses the flavour for your stack (shadcn/ui, shadcn-vue, shadcn-svelte, spartan/ui, shadcn-solid, Basecoat); `none` opts out and builds by hand |
 | `prHost` | detected | `github`, `gitlab`, `azure`, or `none` |
 
 Edit the `fast` and `build` lists in the generated `init.mjs` to match the static checks and build your CI runs.

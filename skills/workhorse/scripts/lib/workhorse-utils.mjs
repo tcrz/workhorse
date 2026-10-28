@@ -144,9 +144,51 @@ export function detectPrHost(remoteUrl) {
   return 'none';
 }
 
+export const DEFAULT_UI_LIBRARY = 'shadcn';
+
+// Component libraries recognised from package.json, checked in order. When a project
+// already uses one, it wins over the shadcn default: never add a second UI library.
+const UI_LIBRARY_PACKAGES = [
+  ['@mui/material', 'mui'],
+  ['@chakra-ui/react', 'chakra'],
+  ['@mantine/core', 'mantine'],
+  ['antd', 'antd'],
+  ['@heroui/react', 'heroui'],
+  ['@nextui-org/react', 'heroui'],
+  ['@radix-ui/themes', 'radix-themes'],
+  ['primereact', 'primereact'],
+  ['react-bootstrap', 'bootstrap'],
+  ['vuetify', 'vuetify'],
+  ['primevue', 'primevue'],
+  ['element-plus', 'element-plus'],
+  ['naive-ui', 'naive-ui'],
+  ['quasar', 'quasar'],
+  ['@angular/material', 'angular-material'],
+  ['@spartan-ng/brain', 'shadcn'],
+  ['bootstrap', 'bootstrap']
+];
+
+/**
+ * The project's UI component library: one it already uses, else the shadcn default.
+ * `shadcn` means the shadcn family — the stack picks the flavour (shadcn/ui, shadcn-vue,
+ * shadcn-svelte, spartan/ui, shadcn-solid, Basecoat); `none` means hand-built components.
+ * @returns {{ library: string, source: 'detected' | 'default' }}
+ */
+export function detectUiLibrary(project) {
+  const files = Array.isArray(project?.files) ? project.files : [];
+  if (files.some((file) => file === 'components.json' || file.endsWith('/components.json'))) {
+    return { library: 'shadcn', source: 'detected' };
+  }
+  const deps = { ...project?.packageJson?.dependencies, ...project?.packageJson?.devDependencies };
+  for (const [pkg, library] of UI_LIBRARY_PACKAGES) {
+    if (deps[pkg]) return { library, source: 'detected' };
+  }
+  return { library: DEFAULT_UI_LIBRARY, source: 'default' };
+}
+
 export async function buildFeatureList(
   templateName,
-  { approvalMode = 'supervised', integrationBranch, branchPattern = DEFAULT_BRANCH_PATTERN, prHost } = {}
+  { approvalMode = 'supervised', integrationBranch, branchPattern = DEFAULT_BRANCH_PATTERN, uiLibrary = DEFAULT_UI_LIBRARY, prHost } = {}
 ) {
   const parsed = JSON.parse(await readText(path.join(TEMPLATE_DIR, templateName)));
   // Drop template-provided config keys so the caller's choices win and key order is stable.
@@ -154,12 +196,13 @@ export async function buildFeatureList(
   delete rest.approvalMode;
   delete rest.integrationBranch;
   delete rest.branchPattern;
+  delete rest.uiLibrary;
   delete rest.prHost;
   const asserted = assertIntegrationBranch(integrationBranch);
   if (!asserted.ok) {
     throw new Error(asserted.error);
   }
-  const config = { approvalMode, integrationBranch: asserted.name, branchPattern };
+  const config = { approvalMode, integrationBranch: asserted.name, branchPattern, uiLibrary };
   if (prHost) config.prHost = prHost;
   return `${JSON.stringify({ ...config, ...rest }, null, 2)}\n`;
 }
@@ -559,6 +602,12 @@ export function validateFeatureList(parsed, options = {}) {
 
   if (parsed.branchPattern !== undefined && (typeof parsed.branchPattern !== 'string' || !parsed.branchPattern.trim())) {
     warnings.push(`branchPattern should be a non-empty string (e.g. "${DEFAULT_BRANCH_PATTERN}")`);
+  }
+
+  if (parsed.uiLibrary === undefined) {
+    warnings.push(`uiLibrary missing — set the project's component library ("${DEFAULT_UI_LIBRARY}" by default, "none" to hand-build)`);
+  } else if (typeof parsed.uiLibrary !== 'string' || !parsed.uiLibrary.trim()) {
+    warnings.push(`uiLibrary should be a non-empty string ("${DEFAULT_UI_LIBRARY}", "none", or the library the project uses)`);
   }
 
   if (parsed.prHost !== undefined && !PR_HOSTS.includes(parsed.prHost)) {
@@ -1249,6 +1298,23 @@ export async function mergeBranchPatternIfMissing(featureListPath) {
   return { changed: true, previous: null };
 }
 
+export async function mergeUiLibraryIfMissing(featureListPath, uiLibrary) {
+  const parsed = JSON.parse(await readText(featureListPath));
+  if (typeof parsed.uiLibrary === 'string' && parsed.uiLibrary.trim()) {
+    return { changed: false, previous: parsed.uiLibrary };
+  }
+  const { approvalMode, integrationBranch, branchPattern, ...rest } = parsed;
+  const merged = {
+    ...(approvalMode !== undefined ? { approvalMode } : {}),
+    ...(integrationBranch !== undefined ? { integrationBranch } : {}),
+    ...(branchPattern !== undefined ? { branchPattern } : {}),
+    uiLibrary,
+    ...rest
+  };
+  await writeText(featureListPath, `${JSON.stringify(merged, null, 2)}\n`);
+  return { changed: true, previous: null, value: uiLibrary };
+}
+
 /**
  * Merge integrationBranch only when missing AND a validated value is supplied.
  * The caller resolves the value (explicit flag, else origin/HEAD).
@@ -1317,6 +1383,7 @@ export async function buildUpgradePlan(target) {
   let approvalModeMissing = false;
   let integrationBranchMissing = false;
   let branchPatternMissing = false;
+  let uiLibraryMissing = false;
   try {
     const featureList = await readJson(activeFeatureListPath);
     approvalModeMissing = !Object.prototype.hasOwnProperty.call(featureList, 'approvalMode');
@@ -1324,15 +1391,18 @@ export async function buildUpgradePlan(target) {
       || featureList.integrationBranch == null
       || !String(featureList.integrationBranch).trim();
     branchPatternMissing = !(typeof featureList.branchPattern === 'string' && featureList.branchPattern.trim());
+    uiLibraryMissing = !(typeof featureList.uiLibrary === 'string' && featureList.uiLibrary.trim());
   } catch {
     approvalModeMissing = false;
     integrationBranchMissing = false;
     branchPatternMissing = false;
+    uiLibraryMissing = false;
   }
 
   const willChange = [agentFile, '.harness/manifest.json', '.harness/templates/ (plan templates and UI build guide refreshed)'];
   if (approvalModeMissing) willChange.push('feature_list.json (approvalMode merge)');
   if (branchPatternMissing) willChange.push(`feature_list.json (branchPattern merge — ${DEFAULT_BRANCH_PATTERN})`);
+  if (uiLibraryMissing) willChange.push('feature_list.json (uiLibrary merge — detected library, else shadcn)');
   if (integrationBranchMissing) {
     willChange.push('feature_list.json (integrationBranch — from --integration-branch, else origin/HEAD)');
   }
@@ -1357,6 +1427,7 @@ export async function buildUpgradePlan(target) {
     approvalModeMissing,
     integrationBranchMissing,
     branchPatternMissing,
+    uiLibraryMissing,
     willChange,
     renderedContent: composed.content,
     featureListPath: activeFeatureListPath,

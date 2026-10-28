@@ -2,6 +2,7 @@
   "approvalMode": "supervised",
   "integrationBranch": "main",
   "branchPattern": "feature/<short-desc>",
+  "uiLibrary": "shadcn",
   "tasks": [
     {
       "id": "task-001",

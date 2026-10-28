@@ -44,7 +44,7 @@ Feature-scoped flow — routes/handlers/functions the request/data flows through
 - **Design source:** <Figma link | mockup | existing screen `path/route` | reference research>
 - **References** (reference research only): <product or guideline> — <pattern borrowed> — <why it fits this user's job>. Two to four entries. Patterns only, never branding.
 - **Purpose:** <who uses this screen> needs to <the one job>.
-- **Layout:**
+- **Layout** (boxes name `uiLibrary` components; a hand-built one needs a reason):
 
   ```text
   ┌ PageHeader: title + primary action ──────────┐

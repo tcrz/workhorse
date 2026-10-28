@@ -115,7 +115,7 @@ Clarification is owned by the **planning subagent**. When it hits an unknown it 
 
 **Don't ask** for reversible, low-stakes choices (naming, file location, formatting) — pick a default and note it. **Deliverable-shaping choices** (a surface's fields, flow, post-action, auth integration, data contract) are never "default + note" — clarify them, or list them as **unconfirmed assumptions** and require breakdown approval.
 
-**Visual direction (new UI products).** When the request builds UI and the app has no design system or design source, the look is deliverable-shaping: ask once, in Phase 1, for the brand feel, density, and tone, offering reference products as options (see `.harness/templates/ui-build.md`). It's reused by every screen afterwards.
+**Visual direction (new UI products).** When the request builds UI and the app has no design system or design source, the look is deliverable-shaping: ask once, in Phase 1, for the brand feel, density, and tone, offering reference products as options (see `.harness/templates/ui-build.md`). It's reused by every screen afterwards. The component library is **not** a question — it's `feature_list.json` → `uiLibrary` (shadcn by default) — but name it in the overview's Visual direction so the human sees it at approval.
 
 **Adjacent surface ≠ inherited spec.** Signup after login, edit after create — each is a new triage. Do not copy the prior feature's fields, flow, or auth model unless the human stated them in this request.
 
@@ -280,6 +280,7 @@ The validator enforces evidence emptiness on `in-progress`/`verified`, feature-h
 - **No tests** — the harness writes and runs no tests. Per task: `node init.mjs` (static checks). Per feature: the Reviewer observes behaviour in the running app. Push only: `node init.mjs --build` (build). Never run a production build during feature work
 - **Conventions before done** — reconcile code with the project's own conventions (step 3)
 - **UI from a source, never from nothing** — every UI feature builds against a design source: a design file, a mockup, an existing screen, or reference research recorded in the plan. Follow `.harness/templates/ui-build.md`
+- **Compose from the component library** — never hand-build what `uiLibrary` ships. Default `shadcn` means the shadcn flavour for the stack; `none` means the human opted out. If the human says *"don't use shadcn"* or names another library, write it to `feature_list.json` once and apply it from then on
 - **Vet dependencies** — before adding or upgrading a dependency, confirm it is maintained and run the package manager's audit; a high/critical finding with no safe version is a hard rail
 - **The Reviewer is the behaviour gate** — step 4 runs once per feature; nothing commits on unobserved behaviour unless the human explicitly accepts it. The at-will Reviewer runs only when the human asks
 - **Approval-gated commit** — `supervised`: commit only after explicit approval; `autopilot`: commit in the same turn once verification passes
@@ -288,7 +289,7 @@ The validator enforces evidence emptiness on `in-progress`/`verified`, feature-h
 
 ## Required Artifacts
 
-- `feature_list.json` — task state (source of truth): `approvalMode`, `integrationBranch`, `branchPattern`, optional `prHost`, and `tasks[]`
+- `feature_list.json` — task state (source of truth): `approvalMode`, `integrationBranch`, `branchPattern`, `uiLibrary`, optional `prHost`, and `tasks[]`
 - `progress.md` — session continuity log
 - `.harness/plans/` — `overview.md` (Phase 1) and `feat-NNN.md` (Phase 2, including task specs)
 - `init.mjs` — cross-platform runner: `node init.mjs` (fast gate) and `node init.mjs --build` (push quality gate); `init.sh` wraps it

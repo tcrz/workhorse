@@ -11,12 +11,14 @@ import {
   composeUpgradedAgentsFile,
   detectManagedRegionEdits,
   detectPrHost,
+  detectUiLibrary,
   extractHarnessManagedRegion,
   extractProjectPurpose,
   hasHarnessManagedRegion,
   mergeApprovalModeIfMissing,
   mergeBranchPatternIfMissing,
   mergeIntegrationBranchIfMissing,
+  mergeUiLibraryIfMissing,
   normalizeBranchName,
   readSkillMetadata,
   renderAgentsFromTemplate,
@@ -188,6 +190,19 @@ try {
     }
   }
 
+  for (const [project, expected] of [
+    [{ files: [], packageJson: { dependencies: { next: '16' } } }, { library: 'shadcn', source: 'default' }],
+    [{ files: ['components.json'], packageJson: {} }, { library: 'shadcn', source: 'detected' }],
+    [{ files: [], packageJson: { dependencies: { '@mui/material': '7' } } }, { library: 'mui', source: 'detected' }],
+    [{ files: [], packageJson: { devDependencies: { vuetify: '3' } } }, { library: 'vuetify', source: 'detected' }],
+    [{ files: ['manage.py'] }, { library: 'shadcn', source: 'default' }]
+  ]) {
+    const got = detectUiLibrary(project);
+    if (got.library !== expected.library || got.source !== expected.source) {
+      throw new Error(`detectUiLibrary(${JSON.stringify(project)}) should be ${JSON.stringify(expected)} (got ${JSON.stringify(got)})`);
+    }
+  }
+
   const split = splitBuildCommands(['npm install', 'npm run lint', 'npm run build', 'mvn -q package -DskipTests']);
   if (JSON.stringify(split) !== JSON.stringify({ fast: ['npm install', 'npm run lint'], build: ['npm run build', 'mvn -q package -DskipTests'] })) {
     throw new Error(`splitBuildCommands must keep install/static in fast and defer builds (got ${JSON.stringify(split)})`);
@@ -232,6 +247,9 @@ try {
   const missingBranch = validateFeatureList({ tasks: [row()] });
   if (!missingBranch.ok || !missingBranch.warnings.some((w) => /integrationBranch missing/.test(w))) {
     throw new Error('missing integrationBranch must be a soft warning, not tier-1');
+  }
+  if (!validateFeatureList({ ...base, tasks: [row()] }).warnings.some((w) => /uiLibrary missing/.test(w))) {
+    throw new Error('a feature list without uiLibrary must soft-warn');
   }
   if (!validateFeatureList({ ...base, prHost: 'bitbucket', tasks: [row()] }).warnings.some((w) => /prHost/.test(w))) {
     throw new Error('an unknown prHost must soft-warn');
@@ -335,7 +353,7 @@ try {
   }
 
   const features = JSON.parse(await readFile(path.join(repo, 'feature_list.json'), 'utf8'));
-  if (features.approvalMode !== 'supervised' || features.integrationBranch !== 'main' || features.branchPattern !== 'feature/<short-desc>') {
+  if (features.approvalMode !== 'supervised' || features.integrationBranch !== 'main' || features.branchPattern !== 'feature/<short-desc>' || features.uiLibrary !== 'shadcn') {
     throw new Error(`default scaffold config is wrong (got ${JSON.stringify({ ...features, tasks: undefined })})`);
   }
   for (const name of ['overview-plan.md', 'plan.md', 'ui-build.md']) {
@@ -358,6 +376,9 @@ try {
   }
   if (!agents.includes('### Unobserved behaviour') || !agents.includes('writes and runs **no tests**')) {
     throw new Error('AGENTS.md must make the Reviewer the behaviour gate (no tests, unobserved behaviour blocks)');
+  }
+  if (!agents.includes('Compose from the component library')) {
+    throw new Error('AGENTS.md must tell agents to compose from uiLibrary instead of hand-building');
   }
   if (!agents.includes('.harness/templates/ui-build.md') || !agents.includes('UI from a source, never from nothing')) {
     throw new Error('AGENTS.md must route UI work through .harness/templates/ui-build.md');
@@ -386,12 +407,13 @@ try {
   const flagged = path.join(tempRoot, 'flagged');
   const flaggedRun = runNode(createScript, [
     '--target', flagged, '--approval-mode', 'autopilot', '--integration-branch', 'origin/develop',
-    '--branch-pattern', 'users/<username>/<short-desc>', '--pr-host', 'gitlab', '--agent-file', 'CLAUDE.md'
+    '--branch-pattern', 'users/<username>/<short-desc>', '--pr-host', 'gitlab', '--ui-library', 'none', '--agent-file', 'CLAUDE.md'
   ]);
   if (flaggedRun.status !== 0) throw new Error(`workhorse-create.mjs with flags failed: ${flaggedRun.stderr}`);
   const flaggedFeatures = JSON.parse(await readFile(path.join(flagged, 'feature_list.json'), 'utf8'));
   if (flaggedFeatures.approvalMode !== 'autopilot' || flaggedFeatures.integrationBranch !== 'develop'
-    || flaggedFeatures.branchPattern !== 'users/<username>/<short-desc>' || flaggedFeatures.prHost !== 'gitlab') {
+    || flaggedFeatures.branchPattern !== 'users/<username>/<short-desc>' || flaggedFeatures.prHost !== 'gitlab'
+    || flaggedFeatures.uiLibrary !== 'none') {
     throw new Error(`workhorse-create.mjs did not honour its flags (got ${JSON.stringify({ ...flaggedFeatures, tasks: undefined })})`);
   }
   if (!(await readFile(path.join(flagged, 'CLAUDE.md'), 'utf8')).startsWith('# CLAUDE.md')) {
@@ -441,12 +463,14 @@ try {
 
   if (!(await mergeApprovalModeIfMissing(featureListPath)).changed) throw new Error('approvalMode must merge when missing');
   if (!(await mergeBranchPatternIfMissing(featureListPath)).changed) throw new Error('branchPattern must merge when missing');
+  if (!(await mergeUiLibraryIfMissing(featureListPath, 'shadcn')).changed) throw new Error('uiLibrary must merge when missing');
+  if ((await mergeUiLibraryIfMissing(featureListPath, 'mui')).changed) throw new Error('mergeUiLibraryIfMissing must not overwrite an existing value');
   if (!(await mergeIntegrationBranchIfMissing(featureListPath, 'main')).changed) throw new Error('integrationBranch must merge when missing');
   if ((await mergeIntegrationBranchIfMissing(featureListPath, 'develop')).changed) {
     throw new Error('mergeIntegrationBranchIfMissing must not overwrite an existing value');
   }
   const merged = JSON.parse(await readFile(featureListPath, 'utf8'));
-  if (JSON.stringify(Object.keys(merged)) !== JSON.stringify(['approvalMode', 'integrationBranch', 'branchPattern', 'tasks'])) {
+  if (JSON.stringify(Object.keys(merged)) !== JSON.stringify(['approvalMode', 'integrationBranch', 'branchPattern', 'uiLibrary', 'tasks'])) {
     throw new Error(`merged config keys should stay ordered ahead of tasks (got ${Object.keys(merged).join(', ')})`);
   }
 

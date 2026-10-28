@@ -63,6 +63,7 @@ Options:
 - `--integration-branch <name>` — PR target (default: `origin/HEAD`, else `main`).
 - `--branch-pattern "<pattern>"` — feature branch convention (default `feature/<short-desc>`; placeholders `<short-desc>`, `<username>`).
 - `--pr-host github|gitlab|azure|none` — override PR host detection (default: derived from the origin remote at runtime).
+- `--ui-library shadcn|none|<name>` — component library for UI work (default: the one the project already uses, else `shadcn` — the shadcn flavour for the stack). `none` opts out.
 - `--agent-file CLAUDE.md` for Claude-oriented projects.
 - `--package-manager npm|pnpm|yarn|bun` when detection is wrong.
 - `--commands "cmd one,cmd two"` for custom static checks and builds. Commands that look like builds run only under `--build`.
@@ -77,7 +78,7 @@ Options:
 
    That's the whole message. Don't recap the files created, explain how the harness works, describe trade-offs, or ask about committing — the harness files are committed automatically with the first feature. Add a sentence only for something that needs the user: validation still failing, or a UI project with no browser tool available.
 
-`feature_list.json` ships with `approvalMode`, `integrationBranch`, `branchPattern`, and one placeholder task — the agent replaces it with real tasks as work arrives; humans prompt in natural language.
+`feature_list.json` ships with `approvalMode`, `integrationBranch`, `branchPattern`, `uiLibrary`, and one placeholder task — the agent replaces it with real tasks as work arrives; humans prompt in natural language.
 
 ### Request triage
 
@@ -92,7 +93,7 @@ On implementation requests, the agent **must** update `feature_list.json` before
 
 ### Building UI
 
-The harness can't define what every UI should look like, so it defines how to decide. Every UI feature builds against a **design source** — a design file (Figma via MCP when connected), a mockup, an existing screen, or **reference research**: the planner names the screen type, studies 2–4 products known for it plus platform guidelines, and records the borrowed patterns in the plan for approval. New products get one visual-direction question and a foundation feature first. Builders follow a fixed build order and a required screenshot loop at desktop and phone width. All of it lives in `templates/ui-build.md`, copied into each repo at `.harness/templates/ui-build.md`.
+The harness can't define what every UI should look like, so it defines how to decide. Every UI feature builds against a **design source** — a design file (Figma via MCP when connected), a mockup, an existing screen, or **reference research**: the planner names the screen type, studies 2–4 products known for it plus platform guidelines, and records the borrowed patterns in the plan for approval. New products get one visual-direction question and a foundation feature first. Screens are composed from the component library in `uiLibrary` — shadcn by default, in the flavour for the stack (shadcn/ui, shadcn-vue, shadcn-svelte, spartan/ui, shadcn-solid, Basecoat) — never hand-built where the library has the component. An existing library is detected and kept; the user can opt out (`none`). Builders follow a fixed build order and a required screenshot loop at desktop and phone width. All of it lives in `templates/ui-build.md`, copied into each repo at `.harness/templates/ui-build.md`.
 
 ### Feature delivery
 

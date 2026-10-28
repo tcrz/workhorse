@@ -19,12 +19,15 @@ import { readdirSync, readFileSync } from 'node:fs';
 import {
   buildUpgradePlan,
   copyTemplate,
+  detectProject,
+  detectUiLibrary,
   detectDefaultBranch,
   formatScoreReport,
   loadHarnessFiles,
   mergeApprovalModeIfMissing,
   mergeBranchPatternIfMissing,
   mergeIntegrationBranchIfMissing,
+  mergeUiLibraryIfMissing,
   parseArgs,
   readSkillMetadata,
   scoreHarness,
@@ -124,6 +127,7 @@ function planPayload() {
     willChange: plan.willChange,
     integrationBranchMissing: plan.integrationBranchMissing,
     branchPatternMissing: plan.branchPatternMissing,
+    uiLibraryMissing: plan.uiLibraryMissing,
     plansMissingAcceptanceCriteria: plansMissingAcceptanceCriteria(target),
     readyToApply: plan.readyToApply
   };
@@ -209,6 +213,9 @@ actions.push({ step: 'approval-mode', merged: approval.changed });
 const branchPatternMerge = await mergeBranchPatternIfMissing(plan.featureListPath);
 actions.push({ step: 'branch-pattern', merged: branchPatternMerge.changed });
 
+const uiLibraryMerge = await mergeUiLibraryIfMissing(plan.featureListPath, detectUiLibrary(await detectProject(target)).library);
+actions.push({ step: 'ui-library', merged: uiLibraryMerge.changed, value: uiLibraryMerge.value || uiLibraryMerge.previous });
+
 let integrationMerge = { changed: false, previous: null };
 if (plan.integrationBranchMissing) {
   const integrationBranchArg = typeof args.integrationBranch === 'string' ? args.integrationBranch.trim() : '';
@@ -255,6 +262,7 @@ if (asJson) {
     upgradeMode: plan.upgradeMode,
     approvalModeMerged: approval.changed,
     branchPatternMerged: branchPatternMerge.changed,
+    uiLibraryMerged: uiLibraryMerge.changed,
     integrationBranchMerged: Boolean(integrationMerge.changed),
     integrationBranchWarning: integrationMerge.warning || null,
     manifestPath: path.relative(target, manifest.path),
@@ -273,6 +281,7 @@ if (asJson) {
   console.log(`Agent file: ${plan.agentFile} (${plan.upgradeMode})`);
   console.log(`approvalMode merged: ${approval.changed ? 'yes (supervised)' : 'no (already set)'}`);
   console.log(`branchPattern merged: ${branchPatternMerge.changed ? 'yes' : 'no (already set)'}`);
+  console.log(`uiLibrary merged: ${uiLibraryMerge.changed ? `yes (${uiLibraryMerge.value})` : 'no (already set)'}`);
   if (integrationMerge.changed) {
     console.log(`integrationBranch merged: yes (${integrationMerge.name})`);
   } else if (integrationMerge.warning) {

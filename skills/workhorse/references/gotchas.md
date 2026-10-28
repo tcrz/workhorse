@@ -470,6 +470,16 @@ registry.register('shell', {
 
 ---
 
+## 43. Hand-Built Components a Library Already Ships
+
+**Symptom**: In a fresh app, the foundation feature hand-built a button, badge, select, dialog, sheet, skeleton, and empty state — hundreds of lines a component library provides ready-made, each needing its own accessibility and states work.
+
+**Cause**: "Compose from what exists" only looked at components already in the repo. In a greenfield app there were none, and "no new library without approval" made the planner avoid proposing one — so composing quietly became building everything.
+
+**Fix**: `feature_list.json` → `uiLibrary` (default `shadcn`, the shadcn flavour for the stack; an existing library is detected and kept; `none` opts out). Never hand-build what the library ships. The overview names the library so the human sees it at approval. See `.harness/templates/ui-build.md` section 3.
+
+---
+
 ## Related Reading
 
 - [Memory Persistence Pattern](memory-persistence-pattern.md) — Gotchas #1, #3, #4, #15
@@ -477,4 +487,4 @@ registry.register('shell', {
 - [Multi-agent Pattern](multi-agent-pattern.md) — Gotchas #8, #11, #38, #41
 - [Context Engineering Pattern](context-engineering-pattern.md) — Gotchas #9
 - [Lifecycle Pattern](lifecycle-bootstrap-pattern.md) — Gotchas #10, #14, #31, #33
-- UI build guide (`templates/ui-build.md`) — Gotchas #23, #25, #27, #42
+- UI build guide (`templates/ui-build.md`) — Gotchas #23, #25, #27, #42, #43

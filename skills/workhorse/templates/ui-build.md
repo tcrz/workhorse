@@ -29,7 +29,7 @@ Record the source in the feature plan's **UI design** section. The builder build
 
 ### New product, no design system
 
-For a greenfield UI, the visual direction — brand feel, density, tone — is a **planning question**, asked once and reused by every screen. The first UI task is then a **foundation task**: design tokens (colour, type scale, spacing, radius, shadow) defined in one place, the app shell, and the handful of core components the plan needs. Screens come after.
+For a greenfield UI, the visual direction — brand feel, density, tone — is a **planning question**, asked once and reused by every screen. The first UI task is then a **foundation task**: set up the component library (section 3), express the visual direction through its theme tokens (colour, type scale, spacing, radius, shadow) in one place, build the app shell, and add the components the plan needs. Screens come after.
 
 ## 2. Plan the screen
 
@@ -40,28 +40,51 @@ In the feature plan's **UI design** section:
 - **Focal point** — the single thing the screen leads with: a key figure, the primary action, the list. Everything else stays quiet. The focal point comes from content and hierarchy, never from new colours or type.
 - **States** — what loading, empty, error, and partial look like.
 
-## 3. Take stock before building
+## 3. Use the component library
+
+**Never hand-build what the component library ships.** Buttons, inputs, selects, dialogs, sheets, tabs, tables, badges, toasts, skeletons — add them from the library and compose screens from them. Hand-build a component only when the library genuinely has nothing that fits, and say why in the plan.
+
+`feature_list.json` → **`uiLibrary`** names the library:
+
+- **`shadcn`** (default) — the shadcn family, in the flavour that matches the stack:
+
+  | Stack | Use |
+  |---|---|
+  | React — Next.js, Vite, Remix / React Router, TanStack Start, Astro with React | **shadcn/ui** — ui.shadcn.com |
+  | Vue / Nuxt | **shadcn-vue** — shadcn-vue.com |
+  | Svelte / SvelteKit | **shadcn-svelte** — shadcn-svelte.com |
+  | Angular | **spartan/ui** — spartan.ng |
+  | Solid / SolidStart | **shadcn-solid** — github.com/hngngn/shadcn-solid |
+  | Anything else — server-rendered templates, plain HTML, htmx, Rails, Django, Laravel | **Basecoat** — basecoatui.com |
+
+  All of them are built on Tailwind CSS: if the project doesn't have it, the foundation task adds it. Components are added through each flavour's CLI and land in the repo as source you own — customise them through theme tokens and variants, not by rewriting them.
+- **`none`** — the human opted out: build components by hand, following the rest of this guide.
+- **Any other value** (`mui`, `chakra`, `mantine`, `vuetify`, …) — the library this project already uses. Compose from it; don't add shadcn alongside it.
+
+The human can change it at any time — *"don't use shadcn"*, *"use MUI"* — and the agent writes the new value to `feature_list.json`. Adding a **second** UI library, or swapping the existing one, always needs the human's approval.
+
+## 4. Take stock before building
 
 List what the project already has, and compose from it:
 
-- components, and where shared ones live
+- components already added from the library, and where shared ones live
 - design tokens — never hard-code a colour, size, or font that a token covers
 - the app shell and layout conventions
 - form, validation, and data-fetching patterns
 
-Create a new component only when nothing fits, and put it with the shared components, not inside the page. A connected design-system MCP or an installed design skill can help here, but **the project's own design system always wins**. No new UI library without the human's approval.
+New compositions go with the shared components, not inside the page. A connected design-system MCP or an installed design skill can help here, but **the project's own design system always wins**.
 
 ### Bundled design skills
 
-The Workhorse plugin ships two design skills. Use them where they fit, never against the project's own system:
+The Workhorse plugin ships two design skills:
 
-- **`emil-design-eng`** — polish, interaction feel, and animation decisions. Use it at step 8 (polish), whenever a screen adds motion or transitions, and when judging whether an interaction *feels* right.
-- **`shadcn`** — only when the project already uses shadcn/ui (it has a `components.json`), or when the human chose shadcn/ui as the foundation of a new React + Tailwind app. Never introduce it into a project that has its own component library.
+- **`shadcn`** — the official shadcn/ui skill. Use it whenever `uiLibrary` is `shadcn` on a React stack: adding, composing, and styling components. For the other flavours, follow that flavour's own docs and CLI.
+- **`emil-design-eng`** — polish, interaction feel, and animation decisions. Use it at the polish step, whenever a screen adds motion or transitions, and when judging whether an interaction *feels* right.
 
-## 4. Build in this order
+## 5. Build in this order
 
 1. **Route and shell** — the screen is reachable inside the real layout.
-2. **Static layout with realistic content** — real-length names, zero items, one item, many items. No lorem ipsum.
+2. **Static layout with realistic content** — composed from library components — real-length names, zero items, one item, many items. No lorem ipsum.
 3. **Real data.**
 4. **States** — loading, empty, error, partial.
 5. **Interactions** — forms, validation, feedback after every action.
@@ -69,13 +92,13 @@ The Workhorse plugin ships two design skills. Use them where they fit, never aga
 7. **Accessibility** — every control reachable by keyboard, labelled, with a visible focus state; text contrast meets WCAG AA.
 8. **Polish** — then remove one thing that doesn't help the user.
 
-## 5. Look while you build (required)
+## 6. Look while you build (required)
 
-After steps 2, 4, and 6, open the page in the browser tool (the Workhorse plugin bundles Playwright) and take screenshots at desktop width and phone width (~390px). Compare them against the design source and fix what's off before moving on.
+After build steps 2, 4, and 6 in section 5, open the page in the browser tool (the Workhorse plugin bundles Playwright) and take screenshots at desktop width and phone width (~390px). Compare them against the design source and fix what's off before moving on.
 
 This is the builder checking its own work. The Reviewer still checks independently afterwards and never takes the builder's word for it. With no browser tool available, say so in `progress.md` and continue — the Reviewer's unobserved-behaviour gate will surface it.
 
-## 6. Craft rules
+## 7. Craft rules
 
 **Structure is information.**
 - Number items only when they are a real sequence.
@@ -92,7 +115,7 @@ This is the builder checking its own work. The Reviewer still checks independent
 
 **Cohesion.** Match how this app already does the same thing before inventing a new pattern.
 
-## 7. Copy
+## 8. Copy
 
 - **User language, not system language.** "Notifications", not "webhook config".
 - **Buttons say what happens.** "Save changes", "Send invoice" — not "Submit" or "OK".
@@ -106,6 +129,7 @@ This is the builder checking its own work. The Reviewer still checks independent
 Only what's objective — never taste:
 
 - the screen follows its design source or the borrowed patterns listed in the plan
+- components come from `uiLibrary` — a hand-built button, dialog, or input that the library ships is a `warn` finding
 - loading, empty, and error states exist and match the plan
 - it works at phone width, and nothing essential sits behind hover
 - controls are keyboard-reachable and labelled

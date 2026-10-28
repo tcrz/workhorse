@@ -38,6 +38,8 @@ Replace the placeholder with a mermaid diagram of the end-to-end user/data flow 
 
 ## Visual direction
 
+**Components:** <`uiLibrary` from feature_list.json — e.g. shadcn/ui (Next.js), or "none — hand-built">
+
 **UI work only.** Where the screens' look comes from: an existing design system, a design file, or — for a new product — the agreed brand feel, density, and tone plus the reference products the screens will draw on (see `.harness/templates/ui-build.md`). For a new product with no design system, propose a **foundation** feature (tokens, app shell, core components) before any screen.
 
 ## Cross-cutting concerns

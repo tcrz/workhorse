@@ -3,6 +3,7 @@ import { chmod, mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import {
   DEFAULT_BRANCH_PATTERN,
+  DEFAULT_UI_LIBRARY,
   PR_HOSTS,
   assertIntegrationBranch,
   buildFeatureList,
@@ -10,6 +11,7 @@ import {
   detectDefaultBranch,
   detectPackageManager,
   detectPrHost,
+  detectUiLibrary,
   detectProject,
   exists,
   initMjsFromCommands,
@@ -25,7 +27,7 @@ import {
 const args = parseArgs(process.argv.slice(2));
 
 if (args.help) {
-  console.log(`Usage: node scripts/workhorse-create.mjs [--target DIR] [--approval-mode autopilot|supervised] [--integration-branch NAME] [--branch-pattern PATTERN] [--pr-host github|gitlab|azure|none] [--agent-file AGENTS.md|CLAUDE.md] [--package-manager npm|pnpm|yarn|bun] [--commands "cmd one,cmd two"] [--force]
+  console.log(`Usage: node scripts/workhorse-create.mjs [--target DIR] [--approval-mode autopilot|supervised] [--integration-branch NAME] [--branch-pattern PATTERN] [--pr-host github|gitlab|azure|none] [--ui-library shadcn|none|NAME] [--agent-file AGENTS.md|CLAUDE.md] [--package-manager npm|pnpm|yarn|bun] [--commands "cmd one,cmd two"] [--force]
 
 Creates a minimal production harness:
   AGENTS.md or CLAUDE.md
@@ -42,6 +44,10 @@ Options:
   --integration-branch  Branch feature PRs target. Default: the remote default branch
                         (origin/HEAD), else "main".
   --branch-pattern      Feature branch naming convention. Default: ${DEFAULT_BRANCH_PATTERN}
+  --ui-library          Component library for UI work. Default: the library the project already
+                        uses (MUI, Chakra, …, or shadcn when components.json exists), else
+                        "${DEFAULT_UI_LIBRARY}" — the shadcn family, picked per stack. "none" opts out
+                        and has UI built by hand.
   --pr-host             Override PR host detection. Default: derived from the origin remote at
                         runtime (not written unless passed).
   --commands            Comma-separated static-check and build commands, replacing detection.
@@ -85,6 +91,8 @@ if (prHost && !PR_HOSTS.includes(prHost)) {
   process.exit(1);
 }
 
+const uiLibraryArg = typeof args.uiLibrary === 'string' && args.uiLibrary.trim() ? args.uiLibrary.trim() : '';
+
 const agentFile = args.agentFile || 'AGENTS.md';
 const force = Boolean(args.force);
 const project = await detectProject(target);
@@ -94,6 +102,10 @@ const commands = args.commands
   : verificationCommands(project, args.packageManager);
 
 const { fast, build } = splitBuildCommands(commands);
+
+const detectedUi = detectUiLibrary(project);
+const uiLibrary = uiLibraryArg || detectedUi.library;
+const uiLibrarySource = uiLibraryArg ? 'flag' : detectedUi.source;
 
 await mkdir(target, { recursive: true });
 
@@ -115,6 +127,7 @@ if (force || !await exists(featureListPath)) {
     approvalMode,
     integrationBranch,
     branchPattern,
+    uiLibrary,
     prHost
   }));
   results.push({ path: featureListPath, status: 'written' });
@@ -167,6 +180,7 @@ console.log(`Detected stack: ${project.stack}`);
 console.log(`Approval mode: ${approvalMode}`);
 console.log(`Integration branch: ${integrationBranch} (${integrationBranchSource})`);
 console.log(`Branch pattern: ${branchPattern}`);
+console.log(`UI library: ${uiLibrary} (${uiLibrarySource})`);
 console.log(`PR host: ${detectedHost}${prHost ? ' (override)' : ' (detected from origin; re-detected at runtime)'}`);
 console.log('Fast gate (node init.mjs):');
 for (const command of fast) {
