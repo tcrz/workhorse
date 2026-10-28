@@ -1,0 +1,16 @@
+{
+  "approvalMode": "supervised",
+  "integrationBranch": "main",
+  "branchPattern": "feature/<short-desc>",
+  "tasks": [
+    {
+      "id": "task-001",
+      "featId": "feat-001",
+      "name": "Replace with an actionable, human-friendly deliverable — the same sentence as the task's heading in the plan's Task specs",
+      "description": "Replace with one human-friendly sentence stating what 'done' looks like for this task",
+      "dependencies": [],
+      "status": "not-started",
+      "evidence": ""
+    }
+  ]
+}

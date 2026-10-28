@@ -1,0 +1,180 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Feature List",
+  "description": "Track task implementation state for agent-driven development. Tasks are grouped by featId into features planned by the planning subagent; each feature's plan file carries the task specs.",
+  "type": "object",
+  "properties": {
+    "approvalMode": {
+      "type": "string",
+      "enum": [
+        "autopilot",
+        "supervised"
+      ],
+      "default": "supervised",
+      "description": "Per-repo human-checkpoint policy for delivery gates (commit, push, PR) and the post-triage where-to-start ask. 'supervised' (default) keeps every human gate and asks which feature to start; 'autopilot' auto-starts the earliest plan-order feature, auto-commits after verification passes, pushes at push-gate invocations, and opens the PR after the first successful push. Does NOT relax planning or breakdown gates or any hard rail. Absent means 'supervised'. See AGENTS.md **Approval mode**."
+    },
+    "integrationBranch": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Branch that feature PRs target (e.g. main, develop). Bare name without refs/heads/ or origin/. Resolved at scaffold from origin/HEAD unless overridden. Treated as protected: never implemented on or pushed to directly. See AGENTS.md **Branch Discipline** and **Pull request**."
+    },
+    "tasks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Unique task identifier (e.g., task-001)",
+            "pattern": "^task-\\d+$"
+          },
+          "featId": {
+            "type": "string",
+            "pattern": "^feat-\\d+$",
+            "description": "The feature this task belongs to (e.g. feat-001). All tasks sharing a featId are part of the same feature, implement one at a time, and commit together. Every task row must have a featId."
+          },
+          "name": {
+            "type": "string",
+            "description": "Human-friendly, action-oriented task title — the same sentence used as the task's heading in the parent plan's Task specs (`.harness/plans/feat-NNN.md`). Reads as prose, not a slug: avoid 'Implement X module', 'Add Y component', 'Wire up Z'. See AGENTS.md **Write the task row**."
+          },
+          "title": {
+            "type": "string",
+            "description": "Alternative short label (alias for name) — same human-friendly, action-oriented phrasing rules apply."
+          },
+          "description": {
+            "type": "string",
+            "description": "One human-friendly sentence stating what 'done' means for this task — the behaviour a reviewer will see land. This is the local row's tracking description only; the full implementation contract lives in the plan's Task specs (see AGENTS.md **Task spec content bar**)."
+          },
+          "dependencies": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Task IDs that must be done before this one"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "not-started",
+              "in-progress",
+              "verified",
+              "blocked",
+              "done"
+            ],
+            "description": "Current implementation state. 'verified' means the task is implemented and passes the fast gate, but is not yet committed (waiting for every task in the same featId, then the feature review)."
+          },
+          "evidence": {
+            "type": "string",
+            "description": "Required when status is done. Must be exactly 'commit <hash>' from the commit that landed this task's feature. Leave empty or omit while in-progress or verified; use description and verification on the row for scope and proof."
+          },
+          "reviewVerdict": {
+            "type": "string",
+            "enum": [
+              "pass",
+              "unverified-accepted"
+            ],
+            "description": "Outcome of the step-4 feature review, written identically to every row sharing this featId. Required on done rows: the Reviewer is the harness's only behaviour check and writes no report file, so this is its only trace. 'pass' = every criterion confirmed; 'unverified-accepted' = the human explicitly accepted behaviour the Reviewer could not observe. A failed review is never committed."
+          },
+          "featureBaseSha": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{7,40}$",
+            "description": "Git hash of HEAD at atomic feature start, written identically to every row sharing this featId. Lets the step-4 feature review scope in-feature commits (git diff <featureBaseSha>..HEAD) when a remediation commit leaves the working tree clean."
+          },
+          "planFile": {
+            "type": "string",
+            "pattern": "^\\.harness/plans/feat-\\d+\\.md$",
+            "description": "Relative path to the feature's persisted plan file in .harness/plans/ (e.g. .harness/plans/feat-001.md). All tasks sharing a featId point to the same plan file."
+          }
+        },
+        "required": [
+          "id",
+          "featId",
+          "description",
+          "status"
+        ],
+        "anyOf": [
+          {
+            "required": [
+              "name"
+            ]
+          },
+          {
+            "required": [
+              "title"
+            ]
+          }
+        ],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "const": "done"
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "properties": {
+                "evidence": {
+                  "type": "string",
+                  "pattern": "^commit\\s+[0-9a-f]{7,40}\\s*$",
+                  "description": "Exactly 'commit <hash>' from the commit that landed this task's feature"
+                }
+              },
+              "required": [
+                "evidence",
+                "reviewVerdict"
+              ]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "status": {
+                  "enum": [
+                    "in-progress",
+                    "verified"
+                  ]
+                }
+              },
+              "required": [
+                "status"
+              ]
+            },
+            "then": {
+              "properties": {
+                "evidence": {
+                  "type": "string",
+                  "maxLength": 0,
+                  "description": "Must be empty while in-progress or verified; commit first (once per feature, when all tasks sharing a featId are verified), then mark done"
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "branchPattern": {
+      "type": "string",
+      "minLength": 1,
+      "default": "feature/<short-desc>",
+      "description": "Feature branch naming convention. Placeholders: <short-desc> (kebab-case summary), <username> (local-part of git user.email). See AGENTS.md **Branch Discipline**."
+    },
+    "prHost": {
+      "type": "string",
+      "enum": [
+        "github",
+        "gitlab",
+        "azure",
+        "none"
+      ],
+      "description": "Optional override for the pull request host. When absent, the agent derives it from the origin remote URL. 'none' means push only. See AGENTS.md **Pull request** → Host detection."
+    }
+  },
+  "required": [
+    "tasks"
+  ]
+}

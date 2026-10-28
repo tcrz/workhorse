@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Feature Plan (Phase 2)",
+  "description": "Front-matter schema for `.harness/plans/feat-NNN.md` — the per-feature plan the planning subagent produces in Phase 2 after the overall plan (Phase 1) is approved. Carries the task specs that rows in feature_list.json point to via planFile.",
+  "type": "object",
+  "required": [
+    "featId",
+    "status"
+  ],
+  "properties": {
+    "featId": {
+      "type": "string",
+      "pattern": "^feat-\\d+$",
+      "description": "Feature identifier the plan belongs to"
+    },
+    "overallPlan": {
+      "type": "string",
+      "description": "Relative path to the Phase 1 overall plan this sub-plan derives from (canonical value: `.harness/plans/overview.md`)"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "draft",
+        "approved"
+      ],
+      "description": "Draft until the breakdown is approved; approved once the breakdown is approved and rows are written."
+    },
+    "commitType": {
+      "type": "string",
+      "enum": [
+        "feat",
+        "fix",
+        "refactor",
+        "chore",
+        "docs",
+        "test",
+        "perf",
+        "build",
+        "ci",
+        "style",
+        "revert"
+      ],
+      "description": "Conventional Commits type proposed for the feature's commit subject. Editable at commit approval."
+    }
+  }
+}

@@ -1,0 +1,7 @@
+interface:
+  display_name: "Workhorse"
+  short_description: "Set up and audit the harness your coding agent works in"
+  default_prompt: "Use $workhorse to create, validate, and benchmark a production-ready coding-agent harness for this repository."
+
+policy:
+  allow_implicit_invocation: true

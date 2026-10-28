@@ -1,0 +1,10 @@
+{
+  "name": "workhorse",
+  "version": "1.0.0",
+  "description": "Set up and audit the harness a coding agent works inside: planning with task specs, reviewer-gated verification with a bundled browser, feature delivery, batched push, and pull requests on any git host.",
+  "author": {
+    "name": "Tony Baidoo"
+  },
+  "license": "MIT",
+  "keywords": ["harness", "agents", "workflow", "verification", "review", "planning"]
+}

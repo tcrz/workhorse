@@ -1,0 +1,14 @@
+{
+  "name": "workhorse",
+  "description": "Workhorse — a harness for reliable coding-agent work.",
+  "owner": {
+    "name": "Tony Baidoo"
+  },
+  "plugins": [
+    {
+      "name": "workhorse",
+      "source": "./",
+      "description": "Set up and audit the harness a coding agent works inside: planning, reviewer-gated verification, feature delivery, batched push, and pull requests."
+    }
+  ]
+}
