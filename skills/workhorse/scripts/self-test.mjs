@@ -109,6 +109,13 @@ try {
     if (claudeManifest.version !== skillMeta.version) {
       throw new Error(`plugin version ${claudeManifest.version} does not match skill metadata version ${skillMeta.version}`);
     }
+    // Claude Code keeps installed users on a pinned version until it changes, so every
+    // user-facing change needs a bump — and the changelog's newest entry must match it.
+    const changelog = await readFile(path.join(pluginRoot, 'CHANGELOG.md'), 'utf8');
+    const newest = changelog.match(/^## (\d+\.\d+\.\d+)\b/m)?.[1];
+    if (newest !== claudeManifest.version) {
+      throw new Error(`CHANGELOG.md's newest entry (${newest}) must match the plugin version (${claudeManifest.version}) — bump the version for user-facing changes`);
+    }
     if (JSON.stringify(await readJson('.mcp.json')) !== JSON.stringify(await readJson('mcp.json'))) {
       throw new Error('.mcp.json (Claude Code) and mcp.json (Cursor) must declare the same servers');
     }

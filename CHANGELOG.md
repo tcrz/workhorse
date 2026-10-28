@@ -1,5 +1,26 @@
 # Changelog
 
+Every change that should reach installed users gets a version bump here and in `.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`, and `skills/workhorse/metadata.json` — Claude Code keeps users on a pinned version until it changes. The self-test fails when they disagree.
+
+## 1.1.0 — 2026-10-28
+
+### UI building
+
+- New **UI build guide** (`templates/ui-build.md`, copied to `.harness/templates/`): every UI feature builds against a design source — design file (Figma via MCP), mockup, existing screen, or **reference research** (study 2–4 products known for the screen type plus platform guidelines, borrow patterns, never branding, recorded in the plan for approval). Covers visual direction for new products, a foundation feature, take-stock-first, a fixed build order, a required look-while-building screenshot loop, and craft and copy rules.
+- Plans gain a **UI design** section; overviews gain **Visual direction**. The Reviewer fails missing states and accessibility basics.
+- **Component library by default:** new `uiLibrary` setting (`--ui-library`). Defaults to `shadcn` — the shadcn flavour for the stack: shadcn/ui, shadcn-vue, shadcn-svelte, spartan/ui, shadcn-solid, or Basecoat — and never hand-builds what the library ships. An existing library (MUI, Chakra, …) is detected and kept; `none` opts out. Upgrades merge a missing `uiLibrary`.
+- **Working from a design:** an approved Figma or mockup is binding on structure and flexible on pixels. Precedence is accessibility, then the design, then the design system, then craft rules and the design pass (gap-filling only). The planner turns the design's structure into acceptance criteria, so structural departures fail review; cosmetic ones warn. Deliberate departures are recorded in the plan. Figma via MCP feeds tokens and screenshot comparison; a Figma link without the MCP means ask, never guess.
+- **Design gaps:** what the design doesn't show is listed under **Design gaps** at plan approval and filled with behaviour, never new content; big gaps are asked about first; with a design, the design pass stays functional; accessibility changes to the design are named in the commit overview and PR.
+- Bundles two design skills, vendored unmodified and pinned by commit in `vendor.json`: **`emil-design-eng`** (Emil Kowalski — polish, interaction, animation) and the official **`shadcn`** skill. `tools/sync-vendored-skills.mjs` updates them; licenses and notes in `THIRD_PARTY_NOTICES.md`.
+- Both bundled skills are explicit parts of every UI task (step 1 of Completing a feature), and each UI task leaves a `progress.md` trace line saying which library components were used and whether the design pass ran.
+- Gotchas #42 (built a UI from nothing), #43 (hand-built components a library ships), #44 ("improved" an approved design).
+
+### Changed
+
+- Harness setup ends with a one-line handoff — *"Workhorse is set up — supervised mode, pull requests target `main`. What would you like to build?"* — instead of a recap. The agent checks `init.mjs` itself, and the harness files are committed automatically as the first commit on the first feature branch.
+- The `workhorse-reviewer` and `workhorse-planner` subagents inherit the session's model instead of pinning Opus.
+- The README describes Workhorse by what to say to the agent, not which scripts to run.
+
 ## 1.0.0 — 2026-10-28
 
 First release of Workhorse, a general-purpose harness plugin for Claude Code and Cursor, derived from an organisation-specific harness skill.
@@ -8,18 +29,8 @@ First release of Workhorse, a general-purpose harness plugin for Claude Code and
 
 - Ships as a plugin for **Claude Code** (`.claude-plugin/`) and **Cursor** (`.cursor-plugin/`) from one repository, with a Claude Code marketplace manifest.
 - Bundles **Playwright MCP** (`@playwright/mcp@0.0.83`, headless, isolated) so the Reviewer can always observe UI behaviour.
-- Adds the **`workhorse-reviewer`** and **`workhorse-planner`** subagents (model inherited from the session) with editing tools removed (enforced in Claude Code; instruction-level in Cursor). They are thin: their rules live in the harness's `AGENTS.md`, which they read themselves.
+- Adds the **`workhorse-reviewer`** and **`workhorse-planner`** subagents with editing tools removed (enforced in Claude Code; instruction-level in Cursor). They are thin: their rules live in the harness's `AGENTS.md`, which they read themselves.
 - The skill still works standalone from `skills/workhorse/`, falling back to general subagents and a user-connected browser tool.
-
-### UI building
-
-- New **UI build guide** (`templates/ui-build.md`, copied to `.harness/templates/`): every UI feature builds against a design source — design file (Figma via MCP), mockup, existing screen, or **reference research** (study 2–4 products known for the screen type plus platform guidelines, borrow patterns, never branding, recorded in the plan for approval). Covers visual direction for new products, a foundation feature, take-stock-first, a fixed build order, a required look-while-building screenshot loop, and craft and copy rules.
-- Plans gain a **UI design** section; overviews gain **Visual direction**. The Reviewer fails missing states and accessibility basics, and reports design departures as warnings.
-- Gotcha #42: built a UI from nothing.
-- **Component library by default:** new `uiLibrary` setting (`--ui-library`). Defaults to `shadcn` — the shadcn flavour for the stack: shadcn/ui, shadcn-vue, shadcn-svelte, spartan/ui, shadcn-solid, or Basecoat — and never hand-builds what the library ships. An existing library (MUI, Chakra, …) is detected and kept; `none` opts out. Gotcha #43.
-- **Working from a design:** an approved Figma or mockup is binding on structure and flexible on pixels. Precedence is accessibility, then the design, then the design system, then craft rules and the design pass (gap-filling only). The planner turns the design's structure into acceptance criteria, so structural departures fail review; cosmetic ones warn. Deliberate departures are recorded in the plan. Figma via MCP feeds tokens and screenshot comparison; a Figma link without the MCP means ask, never guess. Gaps the design doesn't show are listed under **Design gaps** at plan approval and filled with behaviour, never new content; big gaps are asked about first; the design pass stays functional; accessibility changes to the design are named in the commit overview and PR. Gotcha #44.
-- The bundled `shadcn` and `emil-design-eng` skills are now explicit parts of every UI task (step 1 of Completing a feature), not suggestions in the guide, and each UI task leaves a `progress.md` trace line saying which library components were used and whether the design pass ran.
-- Bundles two design skills, vendored unmodified and pinned by commit in `vendor.json`: **`emil-design-eng`** (Emil Kowalski — polish, interaction, animation) and the official **`shadcn`** skill (used only in shadcn/ui projects). `tools/sync-vendored-skills.mjs` updates them; licenses and notes in `THIRD_PARTY_NOTICES.md`.
 
 ### Kept
 

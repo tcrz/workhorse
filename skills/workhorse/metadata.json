@@ -1,6 +1,6 @@
 {
   "name": "workhorse",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Workhorse — set up and audit the harness a coding agent works inside: planning with task specs, reviewer-gated verification, feature delivery, batched push, and pull requests on any git host.",
   "license": "MIT",
   "author": "Tony Baidoo",
