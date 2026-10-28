@@ -59,22 +59,40 @@ Copy `skills/workhorse/` into your agent's skills directory. Everything works, b
 
 ## Use
 
-Ask your agent: *"Create a harness for this repo"*, *"Audit my AGENTS.md"*, or *"Upgrade this repo's harness"*. Or run the scripts directly (from `skills/workhorse/`):
+Just talk to your agent. Workhorse picks up on what you ask for.
 
-```bash
-# Scaffold (supervised by default; see --help for all options)
-node scripts/workhorse-create.mjs --target /path/to/project
+**Set it up once per repo**
 
-# Score an existing harness across the five subsystems
-node scripts/workhorse-validate.mjs --target /path/to/project
+> *"Set up Workhorse in this repo"* · *"Create a harness for this repo"*
 
-# Refresh a live harness's instructions without losing task state
-node scripts/workhorse-upgrade.mjs --target /path/to/project          # plan
-node scripts/workhorse-upgrade.mjs --target /path/to/project --apply  # apply
+It asks which approval mode you want, confirms which branch pull requests should target, and writes the harness files.
 
-# Shareable report
-node scripts/workhorse-benchmark.mjs --target /path/to/project --html report.html
-```
+**Then ask for work as you normally would**
+
+> *"Add a settings page where users can change their email"* · *"Fix the broken date filter on the orders table"*
+
+The harness takes over from there. It asks clarifying questions, shows you a plan to approve, builds feature by feature, has the Reviewer check each one in the running app, and commits, pushes, and opens the pull request. Supervised mode asks you at each step; autopilot doesn't.
+
+**Steer it while it works**
+
+| Say | What happens |
+|---|---|
+| *"approval mode: autopilot"* (or *supervised*) | Switches mode for this repo |
+| *"all"* or *"start with feat-002"* | Picks which features to build first |
+| *"yes"* / *"changes requested"* | Approves or rejects a commit (supervised) |
+| *"stop after this one"* | Finishes the current feature, then pushes |
+| *"review feat-002 against the plan"* | Runs the Reviewer on demand |
+| *"more like Linear"* (at plan approval) | Redirects the UI references for a screen |
+
+**Keep the harness healthy**
+
+| Say | What happens |
+|---|---|
+| *"Audit this repo's harness"* | Scores it across the five subsystems and names the weakest area |
+| *"Upgrade this repo's harness"* | Refreshes the instructions to the latest Workhorse without losing tasks, plans, or progress |
+| *"Give me a shareable harness report"* | Writes an HTML assessment |
+
+In Claude Code you can also invoke it directly with `/workhorse:workhorse`.
 
 ## What the generated harness does
 
@@ -102,6 +120,8 @@ Edit the `fast` and `build` lists in the generated `init.mjs` to match the stati
 node skills/workhorse/scripts/self-test.mjs
 claude plugin validate --strict .
 ```
+
+The skill's scripts (`skills/workhorse/scripts/workhorse-*.mjs`) are what the agent runs behind the conversation; each takes `--help` if you need to run one by hand.
 
 Keep the two plugin manifests (`.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`) and the two MCP files (`.mcp.json`, `mcp.json`) in sync — the self-test checks both.
 
