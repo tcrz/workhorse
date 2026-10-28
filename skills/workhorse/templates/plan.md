@@ -55,6 +55,7 @@ Feature-scoped flow — routes/handlers/functions the request/data flows through
 
 - **Focal point:** <the single thing the screen leads with>
 - **States:** loading — <…>; empty — <…>; error — <…>; partial — <…>
+- **Design departures** (approved design only): <what differs from the design> — <reason> — <approved by the human | accessibility fix>. Write "none" if the build matches.
 
 ## Files to touch
 

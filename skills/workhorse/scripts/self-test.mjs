@@ -380,6 +380,10 @@ try {
   if (!/use the \*\*`shadcn`\*\* skill/.test(agents) || !/invoke the \*\*`emil-design-eng`\*\* skill/.test(agents) || !agents.includes('design pass: done')) {
     throw new Error('AGENTS.md step 1 must require the shadcn and emil-design-eng skills on UI tasks and leave a trace');
   }
+  const uiGuide = await readFile(path.join(repo, '.harness', 'templates', 'ui-build.md'), 'utf8');
+  if (!uiGuide.includes('### Working from a design') || !uiGuide.includes('Never guess at a design you can')) {
+    throw new Error('ui-build.md must define precedence and fidelity for working from a design');
+  }
   if (!agents.includes('Compose from the component library')) {
     throw new Error('AGENTS.md must tell agents to compose from uiLibrary instead of hand-building');
   }

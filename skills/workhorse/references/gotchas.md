@@ -480,6 +480,16 @@ registry.register('shell', {
 
 ---
 
+## 44. "Improved" an Approved Design
+
+**Symptom**: The human supplied a Figma file, and the build quietly diverged: the design's uppercase section labels were "fixed" by the craft rules, the design pass added animations and changed spacing the designer had specified — or a whole section was swapped for a different component and the review only warned.
+
+**Cause**: Nothing said which wins when the design and the harness's own UI opinions disagree, and every departure from the design was a warning.
+
+**Fix**: Precedence — accessibility, then the design, then the design system, then craft rules and the design pass, which only fill gaps. An approved design is binding on structure: the planner writes its structural elements into acceptance criteria, so departures fail review; cosmetic departures stay warnings. Deliberate departures are recorded in the plan with a reason. See *Working from a design* in `.harness/templates/ui-build.md`.
+
+---
+
 ## Related Reading
 
 - [Memory Persistence Pattern](memory-persistence-pattern.md) — Gotchas #1, #3, #4, #15
@@ -487,4 +497,4 @@ registry.register('shell', {
 - [Multi-agent Pattern](multi-agent-pattern.md) — Gotchas #8, #11, #38, #41
 - [Context Engineering Pattern](context-engineering-pattern.md) — Gotchas #9
 - [Lifecycle Pattern](lifecycle-bootstrap-pattern.md) — Gotchas #10, #14, #31, #33
-- UI build guide (`templates/ui-build.md`) — Gotchas #23, #25, #27, #42, #43
+- UI build guide (`templates/ui-build.md`) — Gotchas #23, #25, #27, #42, #43, #44

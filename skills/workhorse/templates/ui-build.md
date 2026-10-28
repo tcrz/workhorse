@@ -8,12 +8,46 @@ Read this for any feature that adds or changes a user-facing screen: at planning
 
 Before designing anything, find what the screen should be built from. Use the first that exists:
 
-1. **A design file.** A Figma link (or similar) from the human. If a Figma MCP is connected, fetch the frames and map each element to an existing component.
+1. **A design file.** A Figma link (or similar) from the human — see *Working from a design* below.
 2. **A mockup or screenshot** the human provides.
 3. **An existing screen in this app** that does something similar. Match it — a new screen should feel like the rest of the product.
 4. **Reference research** — when there is nothing to follow (see below).
 
 Record the source in the feature plan's **UI design** section. The builder builds against it and the Reviewer reviews against it.
+
+### Working from a design
+
+An **approved design** — a Figma file or mockup the human has signed off — is binding on **structure** and flexible on **pixels**.
+
+**Precedence.** When rules disagree, the higher one wins:
+
+1. Accessibility basics — keyboard access, labels, focus, WCAG AA contrast
+2. The design source
+3. The project's design system and component library
+4. This guide's craft and copy rules, and the `emil-design-eng` design pass — these only **fill gaps the design leaves**: motion, hover and press feedback, states the design doesn't show. Never "fix" something the design specifies.
+
+**How firm the source is decides what a departure costs:**
+
+| Design source | Structural departure | Cosmetic departure |
+|---|---|---|
+| Approved design file or mockup | `fail` | `warn` |
+| An existing screen to match | `warn` | `warn` |
+| Reference research | `warn` | `warn` |
+
+A **structural** departure means the screen is built differently: a section missing, elements in a different place or order, a different kind of component (tabs designed, dropdown built), content missing or added, a different flow. A **cosmetic** departure means it's built the same way but looks slightly off: spacing, shade, weight, radius, a near-match icon.
+
+**Structure becomes acceptance criteria.** With an approved design, the planner writes its structural elements into the feature's acceptance criteria — *"a stats row with four KPIs sits above the orders table"*, *"selecting an order opens a side panel, not a page"* — so the Reviewer holds the build to them, and the human sees exactly what's binding at plan approval.
+
+**Deliberate departures go on record.** When the design can't or shouldn't be followed exactly, list it under **Design departures** in the plan with the reason. Accessibility conflicts (text that fails contrast, a target too small) are fixed without asking; anything else needs the human's approval first. A recorded, approved departure isn't a finding.
+
+**Figma.**
+- With a **Figma MCP** connected: fetch the frames and the design's variables. Put the variables into the theme tokens, map each element to a `uiLibrary` component, and in the screenshot loop compare a screenshot of the frame with the build at the same width.
+- With a Figma **link but no MCP**: stop and ask the human to connect Figma or share exported frames. Never guess at a design you can't see.
+- If the design is built on a **code-backed design system** (MUI, a company library, Code Connect mappings), raise it as a choice against `uiLibrary` instead of defaulting to shadcn.
+
+**Fidelity over purity.** When matching the design needs more than theme tokens and variants, modify the library component in place and note why in the plan.
+
+**States the design doesn't show** — designs usually cover the happy path. Build loading, empty, error, and partial states anyway, in the design's visual language.
 
 ### Reference research (no design to follow)
 
@@ -57,7 +91,7 @@ In the feature plan's **UI design** section:
   | Solid / SolidStart | **shadcn-solid** — github.com/hngngn/shadcn-solid |
   | Anything else — server-rendered templates, plain HTML, htmx, Rails, Django, Laravel | **Basecoat** — basecoatui.com |
 
-  All of them are built on Tailwind CSS: if the project doesn't have it, the foundation task adds it. Components are added through each flavour's CLI and land in the repo as source you own — customise them through theme tokens and variants, not by rewriting them.
+  All of them are built on Tailwind CSS: if the project doesn't have it, the foundation task adds it. Components are added through each flavour's CLI and land in the repo as source you own — customise them through theme tokens and variants, not by rewriting them, unless matching an approved design needs more (see *Working from a design*).
 - **`none`** — the human opted out: build components by hand, following the rest of this guide.
 - **Any other value** (`mui`, `chakra`, `mantine`, `vuetify`, …) — the library this project already uses. Compose from it; don't add shadcn alongside it.
 
@@ -79,7 +113,7 @@ New compositions go with the shared components, not inside the page. A connected
 The Workhorse plugin ships two design skills. Both are part of every UI task (AGENTS.md → **Completing a feature**, step 1), and each leaves a trace line in `progress.md`:
 
 - **`shadcn`** — the official shadcn/ui skill. Required whenever `uiLibrary` is `shadcn` on a React stack: setting up the library in the foundation feature, then adding, composing, and styling every component. For the other flavours, follow that flavour's own docs and CLI.
-- **`emil-design-eng`** — the design pass. Required at the polish step of every UI task: interaction feel, transitions on overlays and state changes, feedback on actions, easing and timing. Also use it whenever a screen adds motion, or when judging whether an interaction *feels* right.
+- **`emil-design-eng`** — the design pass. Required at the polish step of every UI task: interaction feel, transitions on overlays and state changes, feedback on actions, easing and timing. Also use it whenever a screen adds motion, or when judging whether an interaction *feels* right. With a design source, it only fills what the design doesn't specify — it never overrides the design.
 
 ## 5. Build in this order
 
@@ -94,11 +128,13 @@ The Workhorse plugin ships two design skills. Both are part of every UI task (AG
 
 ## 6. Look while you build (required)
 
-After build steps 2, 4, and 6 in section 5, open the page in the browser tool (the Workhorse plugin bundles Playwright) and take screenshots at desktop width and phone width (~390px). Compare them against the design source and fix what's off before moving on.
+After build steps 2, 4, and 6 in section 5, open the page in the browser tool (the Workhorse plugin bundles Playwright) and take screenshots at desktop width and phone width (~390px). Compare them against the design source and fix what's off before moving on. With a Figma MCP, fetch a screenshot of the matching frame and compare at the same width.
 
 This is the builder checking its own work. The Reviewer still checks independently afterwards and never takes the builder's word for it. With no browser tool available, say so in `progress.md` and continue — the Reviewer's unobserved-behaviour gate will surface it.
 
 ## 7. Craft rules
+
+These apply where the design source is silent. They never override a design.
 
 **Structure is information.**
 - Number items only when they are a real sequence.
@@ -128,11 +164,11 @@ This is the builder checking its own work. The Reviewer still checks independent
 
 Only what's objective — never taste:
 
-- the screen follows its design source or the borrowed patterns listed in the plan
+- the screen follows its design source or the borrowed patterns listed in the plan, apart from departures recorded under **Design departures**
 - components come from `uiLibrary` — a hand-built button, dialog, or input that the library ships is a `warn` finding
 - loading, empty, and error states exist and match the plan
 - it works at phone width, and nothing essential sits behind hover
 - controls are keyboard-reachable and labelled
 - error and empty-state copy say what to do next
 
-Missing loading, empty, or error states and missing accessibility basics are acceptance failures (`fail`). Departures from the design source or the craft and copy rules are reported as `warn` findings for the human — they don't block the commit.
+Missing loading, empty, or error states and missing accessibility basics are acceptance failures (`fail`). **Structural departures from an approved design** fail through the acceptance criteria the planner wrote for them. Cosmetic departures, departures from an existing screen or reference research, and craft or copy issues are `warn` findings for the human — they don't block the commit.
