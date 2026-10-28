@@ -377,6 +377,9 @@ try {
   if (!agents.includes('### Unobserved behaviour') || !agents.includes('writes and runs **no tests**')) {
     throw new Error('AGENTS.md must make the Reviewer the behaviour gate (no tests, unobserved behaviour blocks)');
   }
+  if (!/use the \*\*`shadcn`\*\* skill/.test(agents) || !/invoke the \*\*`emil-design-eng`\*\* skill/.test(agents) || !agents.includes('design pass: done')) {
+    throw new Error('AGENTS.md step 1 must require the shadcn and emil-design-eng skills on UI tasks and leave a trace');
+  }
   if (!agents.includes('Compose from the component library')) {
     throw new Error('AGENTS.md must tell agents to compose from uiLibrary instead of hand-building');
   }

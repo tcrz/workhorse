@@ -76,10 +76,10 @@ New compositions go with the shared components, not inside the page. A connected
 
 ### Bundled design skills
 
-The Workhorse plugin ships two design skills:
+The Workhorse plugin ships two design skills. Both are part of every UI task (AGENTS.md → **Completing a feature**, step 1), and each leaves a trace line in `progress.md`:
 
-- **`shadcn`** — the official shadcn/ui skill. Use it whenever `uiLibrary` is `shadcn` on a React stack: adding, composing, and styling components. For the other flavours, follow that flavour's own docs and CLI.
-- **`emil-design-eng`** — polish, interaction feel, and animation decisions. Use it at the polish step, whenever a screen adds motion or transitions, and when judging whether an interaction *feels* right.
+- **`shadcn`** — the official shadcn/ui skill. Required whenever `uiLibrary` is `shadcn` on a React stack: setting up the library in the foundation feature, then adding, composing, and styling every component. For the other flavours, follow that flavour's own docs and CLI.
+- **`emil-design-eng`** — the design pass. Required at the polish step of every UI task: interaction feel, transitions on overlays and state changes, feedback on actions, easing and timing. Also use it whenever a screen adds motion, or when judging whether an interaction *feels* right.
 
 ## 5. Build in this order
 
@@ -90,7 +90,7 @@ The Workhorse plugin ships two design skills:
 5. **Interactions** — forms, validation, feedback after every action.
 6. **Responsive** — works down to phone width; nothing essential behind hover.
 7. **Accessibility** — every control reachable by keyboard, labelled, with a visible focus state; text contrast meets WCAG AA.
-8. **Polish** — then remove one thing that doesn't help the user.
+8. **Polish** — run the design pass with the `emil-design-eng` skill (required — see below), then remove one thing that doesn't help the user.
 
 ## 6. Look while you build (required)
 

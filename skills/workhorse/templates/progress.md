@@ -20,6 +20,7 @@ Only present while a feature's tasks are in flight — see AGENTS.md **Feature d
 - **Commit (pending):** `<type>: <summary>` + trailer `Tasks: task-NNN task-NNN` (see AGENTS.md **Commit message format**)
 - **[task-NNN]** [verified|in-progress|not-started|blocked] — [task name]
 - **[task-NNN]** [verified|in-progress|not-started|blocked] — [task name]
+- **UI ([task-NNN]):** library components — [button, dialog, …]; design pass: [done | skipped — reason]
 
 ## Status
 

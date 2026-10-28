@@ -17,6 +17,7 @@ First release of Workhorse, a general-purpose harness plugin for Claude Code and
 - Plans gain a **UI design** section; overviews gain **Visual direction**. The Reviewer fails missing states and accessibility basics, and reports design departures as warnings.
 - Gotcha #42: built a UI from nothing.
 - **Component library by default:** new `uiLibrary` setting (`--ui-library`). Defaults to `shadcn` — the shadcn flavour for the stack: shadcn/ui, shadcn-vue, shadcn-svelte, spartan/ui, shadcn-solid, or Basecoat — and never hand-builds what the library ships. An existing library (MUI, Chakra, …) is detected and kept; `none` opts out. Gotcha #43.
+- The bundled `shadcn` and `emil-design-eng` skills are now explicit parts of every UI task (step 1 of Completing a feature), not suggestions in the guide, and each UI task leaves a `progress.md` trace line saying which library components were used and whether the design pass ran.
 - Bundles two design skills, vendored unmodified and pinned by commit in `vendor.json`: **`emil-design-eng`** (Emil Kowalski — polish, interaction, animation) and the official **`shadcn`** skill (used only in shadcn/ui projects). `tools/sync-vendored-skills.mjs` updates them; licenses and notes in `THIRD_PARTY_NOTICES.md`.
 
 ### Kept

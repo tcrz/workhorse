@@ -314,7 +314,10 @@ Do not run other build commands on your own during feature work.
 
 Steps 1–3 run **per task**. Steps 4–11 run **once per feature**.
 
-1. **Implement** — scope complete for this row, guided by its task spec in the plan. **UI tasks:** follow `.harness/templates/ui-build.md` — take stock of existing components and tokens, build in its order, and run its look-while-building screenshot loop against the plan's design source.
+1. **Implement** — scope complete for this row, guided by its task spec in the plan. **UI tasks:** follow `.harness/templates/ui-build.md` — take stock of existing components and tokens, build in its order, and run its look-while-building screenshot loop against the plan's design source. Two skills are part of this step, not optional extras:
+   - **Components through the library.** When `uiLibrary` is `shadcn` on a React stack, use the **`shadcn`** skill to set up the library (in the foundation feature) and to add and compose every component. Other shadcn flavours: use that flavour's CLI and docs. Never hand-write a component the library ships.
+   - **Design pass.** Before setting the row `verified`, invoke the **`emil-design-eng`** skill on the screens the task touched — interaction feel, transitions on overlays and state changes, feedback on actions, easing and timing — and apply what it finds.
+   - **Trace.** Record one line per UI task in `progress.md` → **Active feature**: which components came from the library, and `design pass: done` — or `skipped` with the reason.
 2. **Fast gate** — `node init.mjs` passes.
 3. **Conventions check** — reconcile the change with the project's documented conventions (`CONTRIBUTING.md`, `docs/`, lint/format config, patterns in neighbouring code); fix divergences. Then set the row `verified` and return to step 1 for the next task.
 4. **Feature review (once every row is `verified`)** — dispatch the **Reviewer** on the feature's uncommitted work (see **Reviewer** → Rail invocation). A **`fail`** blocks: remediate, re-run, **cap 2 cycles**, then `blocked`. **Unobserved behavioural criteria** block too, until fixed or explicitly accepted by the human (see **Reviewer** → Unobserved behaviour). Carry the verdict into step 5.
