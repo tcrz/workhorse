@@ -55,7 +55,7 @@ Cursor reads only `name` and `description` from subagent files, so the read-only
 
 ### Standalone skill (other agents)
 
-Copy `skills/workhorse/` into your agent's skills directory. Everything works, but you get general subagents instead of the pinned ones, and you need to connect a browser tool yourself — without one, every UI feature stops at the unobserved-behaviour ask.
+Copy `skills/workhorse/` into your agent's skills directory. Everything works, but you get general subagents instead of the bundled ones (so read-only isn't enforced by tool limits), and you need to connect a browser tool yourself — without one, every UI feature stops at the unobserved-behaviour ask.
 
 ## Use
 
