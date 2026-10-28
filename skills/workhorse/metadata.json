@@ -4,7 +4,7 @@
   "description": "Workhorse — set up and audit the harness a coding agent works inside: planning with task specs, reviewer-gated verification, feature delivery, batched push, and pull requests on any git host.",
   "license": "MIT",
   "author": "Tony Baidoo",
-  "repository": "",
+  "repository": "https://github.com/tcrz/workhorse",
   "derivedFrom": "https://github.com/walkinglabs/learn-harness-engineering",
   "languages": [
     "en"

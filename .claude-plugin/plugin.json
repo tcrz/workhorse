@@ -6,6 +6,15 @@
   "author": {
     "name": "Tony Baidoo"
   },
+  "homepage": "https://github.com/tcrz/workhorse",
+  "repository": "https://github.com/tcrz/workhorse",
   "license": "MIT",
-  "keywords": ["harness", "agents", "workflow", "verification", "review", "planning"]
+  "keywords": [
+    "harness",
+    "agents",
+    "workflow",
+    "verification",
+    "review",
+    "planning"
+  ]
 }

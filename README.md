@@ -30,22 +30,22 @@ Requires Node.js 18+. The browser server downloads on first use via `npx`; it us
 ### Claude Code
 
 ```bash
-# From a clone of this repository
-claude plugin marketplace add /path/to/workhorse
+claude plugin marketplace add tcrz/workhorse
 claude plugin install workhorse@workhorse
 
-# Or try it for one session without installing
+# Or try a local clone for one session without installing
 claude --plugin-dir /path/to/workhorse
 ```
 
-Once the repository is hosted, `claude plugin marketplace add <owner>/<repo>` replaces the local path. Inside a session, `/plugin` manages it.
+Inside a session, `/plugin` manages it.
 
 ### Cursor
 
 Cursor reads `.cursor-plugin/plugin.json`, `skills/`, `agents/`, and `mcp.json` from the same repository. For local use, link the repository into Cursor's local plugins directory and restart Cursor:
 
 ```bash
-ln -s /path/to/workhorse ~/.cursor/plugins/local/workhorse
+git clone https://github.com/tcrz/workhorse.git
+ln -s "$PWD/workhorse" ~/.cursor/plugins/local/workhorse
 ```
 
 To publish, submit the repository at cursor.com/marketplace/publish (plugins must be open source and are reviewed before listing).
