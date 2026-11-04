@@ -20,6 +20,7 @@ import {
   mergeIntegrationBranchIfMissing,
   mergeUiLibraryIfMissing,
   normalizeBranchName,
+  parseArgs,
   readSkillMetadata,
   renderAgentsFromTemplate,
   splitBuildCommands,
@@ -163,6 +164,13 @@ try {
   }
 
   // --- Pure helpers ------------------------------------------------------------
+  {
+    const parsed = parseArgs(['--commands=CI=1 npm run lint', '--branch-pattern=feat/<a>=<b>', '--empty=', '--flag', '--name', 'x', 'pos']);
+    const expected = { _: ['pos'], commands: 'CI=1 npm run lint', branchPattern: 'feat/<a>=<b>', empty: '', flag: true, name: 'x' };
+    if (JSON.stringify(parsed) !== JSON.stringify(expected)) {
+      throw new Error(`parseArgs must split --key=value on the first '=' only\n  got      ${JSON.stringify(parsed)}\n  expected ${JSON.stringify(expected)}`);
+    }
+  }
   if (normalizeBranchName('refs/remotes/origin/main') !== 'main' || normalizeBranchName('origin/develop') !== 'develop') {
     throw new Error('normalizeBranchName must strip refs/remotes/ and origin/ prefixes');
   }

@@ -16,7 +16,11 @@ export function parseArgs(argv) {
       args._.push(token);
       continue;
     }
-    const [rawKey, inlineValue] = token.slice(2).split('=', 2);
+    // Split on the first '=' only: values like `CI=1 npm run lint` contain '='.
+    const body = token.slice(2);
+    const eq = body.indexOf('=');
+    const rawKey = eq < 0 ? body : body.slice(0, eq);
+    const inlineValue = eq < 0 ? undefined : body.slice(eq + 1);
     const key = rawKey.replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
     if (inlineValue !== undefined) {
       args[key] = inlineValue;

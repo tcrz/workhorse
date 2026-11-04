@@ -2,6 +2,12 @@
 
 Every change that should reach installed users gets a version bump here and in `.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`, and `skills/workhorse/metadata.json` — Claude Code keeps users on a pinned version until it changes. The self-test fails when they disagree.
 
+## 1.2.1 — 2026-11-04
+
+### Fixed
+
+- **`--flag=value` keeps values that contain `=`.** The scripts' argument parser cut inline values at a second `=`, so `--commands=CI=1 npm run lint` became `CI` and `--branch-pattern=feat/<a>=<b>` lost its tail, with no error. It now splits on the first `=` only. Reported in #1.
+
 ## 1.2.0 — 2026-10-28
 
 ### Changed
