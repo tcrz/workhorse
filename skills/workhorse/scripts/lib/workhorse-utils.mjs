@@ -193,9 +193,93 @@ export function detectUiLibrary(project) {
   return { library: DEFAULT_UI_LIBRARY, source: 'default' };
 }
 
+// Where the harness keeps its files. `repo` (default, also when absent) commits
+// them with the project; `local` lists them in git's per-clone exclude file so
+// they never reach a commit or pull request.
+export const STORAGE_MODES = ['repo', 'local'];
+export const AGENT_FILE_CANDIDATES = ['AGENTS.md', 'CLAUDE.md', 'CLAUDE.local.md'];
+export const LOCAL_EXCLUDE_START = '# workhorse:local-storage:start';
+export const LOCAL_EXCLUDE_END = '# workhorse:local-storage:end';
+
+export function harnessPaths(agentFile) {
+  return [agentFile, 'feature_list.json', 'progress.md', 'session-handoff.md', 'init.mjs', 'init.sh', '.harness/'];
+}
+
+function gitOutput(repoRoot, args) {
+  const result = spawnSync('git', args, { cwd: repoRoot, encoding: 'utf8' });
+  return result.status === 0 ? result.stdout.trim() : null;
+}
+
+export function isGitWorkTree(repoRoot) {
+  return Boolean(repoRoot && existsSync(repoRoot)) && gitOutput(repoRoot, ['rev-parse', '--is-inside-work-tree']) === 'true';
+}
+
+// Resolves through worktrees and submodules, where .git is a file, not a directory.
+export function gitExcludePath(repoRoot) {
+  const relative = gitOutput(repoRoot, ['rev-parse', '--git-path', 'info/exclude']);
+  return relative ? path.resolve(repoRoot, relative) : null;
+}
+
+export function trackedHarnessFiles(repoRoot, agentFile) {
+  const output = gitOutput(repoRoot, ['ls-files', '--', ...harnessPaths(agentFile)]);
+  return output ? output.split('\n').filter(Boolean) : [];
+}
+
+function stripLocalExcludeBlock(content) {
+  const start = content.indexOf(LOCAL_EXCLUDE_START);
+  const end = content.indexOf(LOCAL_EXCLUDE_END);
+  if (start < 0 || end < start) return content;
+  return `${content.slice(0, start)}${content.slice(end + LOCAL_EXCLUDE_END.length)}`.replace(/\n{3,}/g, '\n\n');
+}
+
+// Writes (or rewrites) the Workhorse block in the clone's info/exclude. Paths are
+// anchored to the target directory, which may sit below the repository root.
+export async function writeLocalExclude(repoRoot, agentFile) {
+  const excludePath = gitExcludePath(repoRoot);
+  if (!excludePath) throw new Error(`${repoRoot} is not inside a git repository`);
+  const prefix = gitOutput(repoRoot, ['rev-parse', '--show-prefix']) || '';
+  const block = [
+    LOCAL_EXCLUDE_START,
+    '# Workhorse harness files (storage: local). Kept out of commits in this clone only.',
+    ...harnessPaths(agentFile).map((entry) => `/${prefix}${entry}`),
+    LOCAL_EXCLUDE_END
+  ].join('\n');
+  const current = existsSync(excludePath) ? await readText(excludePath) : '';
+  const kept = stripLocalExcludeBlock(current).trimEnd();
+  const next = `${kept ? `${kept}\n\n` : ''}${block}\n`;
+  if (next === current) return { path: excludePath, changed: false };
+  await writeText(excludePath, next);
+  return { path: excludePath, changed: true };
+}
+
+export function localStorageErrors(repoRoot, agentFile) {
+  if (!isGitWorkTree(repoRoot)) {
+    return ['storage is "local" but the target is not inside a git repository'];
+  }
+  const errors = [];
+  const excludePath = gitExcludePath(repoRoot);
+  const content = excludePath && existsSync(excludePath) ? readFileSync(excludePath, 'utf8') : '';
+  if (!content.includes(LOCAL_EXCLUDE_START)) {
+    errors.push('storage is "local" but git\'s info/exclude has no Workhorse block. Run workhorse-upgrade.mjs --apply to restore it');
+  }
+  const tracked = trackedHarnessFiles(repoRoot, agentFile);
+  if (tracked.length) {
+    errors.push(`storage is "local" but harness files are committed: ${tracked.join(', ')}. Untrack them with git rm --cached`);
+  }
+  return errors;
+}
+
+// The harness's own instruction file: the first candidate carrying the managed
+// markers, else the first that exists. A repo can commit a team CLAUDE.md and
+// keep the harness in CLAUDE.local.md.
+export function pickAgentFile(byPath) {
+  const present = AGENT_FILE_CANDIDATES.filter((name) => byPath.has(name));
+  return present.find((name) => byPath.get(name).includes(HARNESS_MANAGED_START)) || present[0] || null;
+}
+
 export async function buildFeatureList(
   templateName,
-  { approvalMode = 'supervised', integrationBranch, branchPattern = DEFAULT_BRANCH_PATTERN, uiLibrary = DEFAULT_UI_LIBRARY, prHost } = {}
+  { approvalMode = 'supervised', integrationBranch, branchPattern = DEFAULT_BRANCH_PATTERN, uiLibrary = DEFAULT_UI_LIBRARY, prHost, storage = 'repo' } = {}
 ) {
   const parsed = JSON.parse(await readText(path.join(TEMPLATE_DIR, templateName)));
   // Drop template-provided config keys so the caller's choices win and key order is stable.
@@ -205,12 +289,15 @@ export async function buildFeatureList(
   delete rest.branchPattern;
   delete rest.uiLibrary;
   delete rest.prHost;
+  delete rest.storage;
   const asserted = assertIntegrationBranch(integrationBranch);
   if (!asserted.ok) {
     throw new Error(asserted.error);
   }
   const config = { approvalMode, integrationBranch: asserted.name, branchPattern, uiLibrary };
   if (prHost) config.prHost = prHost;
+  // `repo` is the default and stays implicit, so existing harnesses read the same.
+  if (storage === 'local') config.storage = 'local';
   return `${JSON.stringify({ ...config, ...rest }, null, 2)}\n`;
 }
 
@@ -617,6 +704,10 @@ export function validateFeatureList(parsed, options = {}) {
     warnings.push(`uiLibrary should be a non-empty string ("none", "${RECOMMENDED_UI_LIBRARY}", "${HAND_BUILT_UI_LIBRARY}", or the library the project uses)`);
   }
 
+  if (parsed.storage !== undefined && !STORAGE_MODES.includes(parsed.storage)) {
+    warnings.push(`storage "${parsed.storage}" is not a known value (expected ${STORAGE_MODES.join(' or ')}); treating as repo`);
+  }
+
   if (parsed.prHost !== undefined && !PR_HOSTS.includes(parsed.prHost)) {
     warnings.push(`prHost "${parsed.prHost}" is not a known value (expected ${PR_HOSTS.join(', ')}); the agent will detect the host from the origin remote`);
   }
@@ -844,7 +935,8 @@ function findCycleNodes(graph) {
 
 export function scoreHarness(files, options = {}) {
   const byPath = new Map(files.map((file) => [file.path, file.content]));
-  const agents = byPath.get('AGENTS.md') || byPath.get('CLAUDE.md') || '';
+  const agentFile = pickAgentFile(byPath);
+  const agents = agentFile ? byPath.get(agentFile) : '';
   const featureList = byPath.get('feature_list.json') || byPath.get('feature-list.json') || '';
   const progress = byPath.get('progress.md') || '';
   const init = byPath.get('init.sh') || '';
@@ -859,11 +951,14 @@ export function scoreHarness(files, options = {}) {
 
   const tier1Errors = parseError
     ? [`Feature list JSON invalid: ${parseError}`]
-    : integrity.errors;
+    : [...integrity.errors];
+  if (parsed?.storage === 'local' && options.repoRoot) {
+    tier1Errors.push(...localStorageErrors(options.repoRoot, agentFile || 'AGENTS.md'));
+  }
 
   const checks = {
     instructions: [
-      hasFile(byPath, ['AGENTS.md', 'CLAUDE.md'], 'Agent instruction file exists'),
+      hasFile(byPath, AGENT_FILE_CANDIDATES, 'Agent instruction file exists'),
       textHas(agents, ['Startup Workflow', 'Before writing code'], 'Startup workflow documented'),
       textHas(agents, ['Definition of Done', 'done only when'], 'Definition of done documented'),
       textHas(agents, ['Verification Commands', './init.sh', 'init.mjs'], 'Verification commands discoverable'),
@@ -985,8 +1080,7 @@ function textHas(text, needles, message) {
 
 export async function loadHarnessFiles(root) {
   const candidates = [
-    'AGENTS.md',
-    'CLAUDE.md',
+    ...AGENT_FILE_CANDIDATES,
     'feature_list.json',
     'feature-list.json',
     'progress.md',
@@ -1139,9 +1233,12 @@ export async function readSkillMetadata() {
 }
 
 export async function resolveAgentFile(root) {
-  if (await exists(path.join(root, 'AGENTS.md'))) return 'AGENTS.md';
-  if (await exists(path.join(root, 'CLAUDE.md'))) return 'CLAUDE.md';
-  return null;
+  const byPath = new Map();
+  for (const name of AGENT_FILE_CANDIDATES) {
+    const fullPath = path.join(root, name);
+    if (await exists(fullPath)) byPath.set(name, await readText(fullPath));
+  }
+  return pickAgentFile(byPath);
 }
 
 // First non-empty paragraph after the "# <name>" title heading. Stops at the
@@ -1391,6 +1488,7 @@ export async function buildUpgradePlan(target) {
   let integrationBranchMissing = false;
   let branchPatternMissing = false;
   let uiLibraryMissing = false;
+  let storage = 'repo';
   try {
     const featureList = await readJson(activeFeatureListPath);
     approvalModeMissing = !Object.prototype.hasOwnProperty.call(featureList, 'approvalMode');
@@ -1399,6 +1497,7 @@ export async function buildUpgradePlan(target) {
       || !String(featureList.integrationBranch).trim();
     branchPatternMissing = !(typeof featureList.branchPattern === 'string' && featureList.branchPattern.trim());
     uiLibraryMissing = !(typeof featureList.uiLibrary === 'string' && featureList.uiLibrary.trim());
+    if (featureList.storage === 'local') storage = 'local';
   } catch {
     approvalModeMissing = false;
     integrationBranchMissing = false;
@@ -1410,6 +1509,7 @@ export async function buildUpgradePlan(target) {
   if (approvalModeMissing) willChange.push('feature_list.json (approvalMode merge)');
   if (branchPatternMissing) willChange.push(`feature_list.json (branchPattern merge — ${DEFAULT_BRANCH_PATTERN})`);
   if (uiLibraryMissing) willChange.push('feature_list.json (uiLibrary merge — detected library, else none)');
+  if (storage === 'local') willChange.push("git's info/exclude (Workhorse block restored if missing)");
   if (integrationBranchMissing) {
     willChange.push('feature_list.json (integrationBranch — from --integration-branch, else origin/HEAD)');
   }
@@ -1435,6 +1535,7 @@ export async function buildUpgradePlan(target) {
     integrationBranchMissing,
     branchPatternMissing,
     uiLibraryMissing,
+    storage,
     willChange,
     renderedContent: composed.content,
     featureListPath: activeFeatureListPath,

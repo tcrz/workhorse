@@ -2,6 +2,14 @@
 
 Every change that should reach installed users gets a version bump here and in `.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`, and `skills/workhorse/metadata.json` — Claude Code keeps users on a pinned version until it changes. The self-test fails when they disagree.
 
+## 1.3.0 — 2026-11-18
+
+### Added
+
+- **Local storage.** Setup now asks where the harness files live. **In the repo** (default, unchanged) commits them with the project. **Local only** (`--storage local`) writes the same files to the same places but lists them in the clone's `.git/info/exclude`, so nothing harness-related reaches a commit or pull request. Planning, review, and resuming across sessions work as before; the state stays on that machine. The choice is recorded as `"storage": "local"` in `feature_list.json` and made once, at setup.
+- In local mode the agent skips the `chore: set up Workhorse harness` commit, never force-adds harness files or runs `git clean -x`, and summarises plans in pull request bodies instead of linking files reviewers can't see.
+- When the repo already commits its own `AGENTS.md` or `CLAUDE.md`, local mode puts the harness instructions in `CLAUDE.local.md`. The scaffolder refuses to start if any harness file is already committed, and validation fails if one gets committed later. Validation and upgrade recognise `CLAUDE.local.md`, and upgrade restores the exclude block if it's missing.
+
 ## 1.2.1 — 2026-11-04
 
 ### Fixed

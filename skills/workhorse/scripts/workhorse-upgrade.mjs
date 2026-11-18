@@ -32,6 +32,7 @@ import {
   readSkillMetadata,
   scoreHarness,
   writeHarnessManifest,
+  writeLocalExclude,
   writeText
 } from './lib/workhorse-utils.mjs';
 
@@ -71,7 +72,8 @@ upgrade would change. No files are written.
 
 With --apply: refresh the harness:managed instruction block (preserving
 PROJECT_PURPOSE and any content outside the markers), merge approvalMode and
-branchPattern if missing, merge integrationBranch if missing, and write
+branchPattern if missing, merge integrationBranch if missing, restore the
+Workhorse block in git's info/exclude when storage is "local", and write
 .harness/manifest.json.
 
 Preserved: feature_list.json tasks, progress.md, session-handoff.md,
@@ -96,7 +98,7 @@ const minScore = Number(args.minScore || 70);
 const plan = await buildUpgradePlan(target);
 
 if (!plan.isHarness) {
-  const message = `No harness found at ${target} (need an AGENTS.md or CLAUDE.md and a feature_list.json).`;
+  const message = `No harness found at ${target} (need an AGENTS.md, CLAUDE.md, or CLAUDE.local.md and a feature_list.json).`;
   if (asJson) {
     console.log(JSON.stringify({ isHarness: false, target, readyToApply: false, message }, null, 2));
   } else {
@@ -215,6 +217,12 @@ actions.push({ step: 'branch-pattern', merged: branchPatternMerge.changed });
 
 const uiLibraryMerge = await mergeUiLibraryIfMissing(plan.featureListPath, detectUiLibrary(await detectProject(target)).library);
 actions.push({ step: 'ui-library', merged: uiLibraryMerge.changed, value: uiLibraryMerge.value || uiLibraryMerge.previous });
+
+// Local storage is chosen at setup; upgrades keep it and restore the exclude block.
+if (plan.storage === 'local') {
+  const exclude = await writeLocalExclude(target, plan.agentFile);
+  actions.push({ step: 'local-exclude', path: exclude.path, changed: exclude.changed });
+}
 
 let integrationMerge = { changed: false, previous: null };
 if (plan.integrationBranchMissing) {
