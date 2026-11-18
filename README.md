@@ -65,7 +65,7 @@ Just talk to your agent. Workhorse picks up on what you ask for.
 
 > *"Set up Workhorse in this repo"* · *"Create a harness for this repo"*
 
-It asks which approval mode you want, confirms which branch pull requests should target, and writes the harness files.
+It asks which approval mode you want and where the harness files should live, confirms which branch pull requests should target, and writes the harness files.
 
 **Then ask for work as you normally would**
 
@@ -113,9 +113,22 @@ In Claude Code you can also invoke it directly with `/workhorse:workhorse`.
 | `integrationBranch` | remote default branch | PR target; treated as protected |
 | `branchPattern` | `feature/<short-desc>` | Feature branch convention (`<short-desc>`, `<username>`) |
 | `uiLibrary` | detected, else `none` | Component library for UI. `none` means not chosen yet — it asks at the first UI work, recommending shadcn in the flavour for your stack (shadcn/ui, shadcn-vue, shadcn-svelte, spartan/ui, shadcn-solid, Basecoat). `hand-built` opts out |
+| `storage` | `repo` | Where the harness files live, chosen at setup. `repo` commits them with the project. `local` keeps them on this machine — listed in git's `info/exclude`, never committed — see below |
 | `prHost` | detected | `github`, `gitlab`, `azure`, or `none` |
 
 Edit the `fast` and `build` lists in the generated `init.mjs` to match the static checks and build your CI runs.
+
+### Keeping the harness out of the repo
+
+Choose **Local only** at setup (`--storage local`) when you don't want harness files in your commits or pull requests — for example in a team repo where nobody else uses Workhorse. The files are the same and sit in the same places, but they're listed in the clone's `.git/info/exclude` instead of being committed. Planning, review, and resuming across sessions work exactly as in the default mode.
+
+The trade-offs:
+
+- The state lives in this clone only. A fresh clone, another machine, or a teammate starts with no tasks, plans, or progress.
+- `git clean -x` deletes ignored files, including the harness. The agent is told never to run it; take care if you do.
+- If the repo already commits its own `AGENTS.md` or `CLAUDE.md`, the harness instructions go in `CLAUDE.local.md` instead, which Claude Code loads alongside it. Other agents may not read that file.
+- Pull request bodies summarise each plan's acceptance criteria instead of linking plan files nobody else can see.
+- The mode is picked once, at setup. Switching an existing harness between modes isn't supported.
 
 ## Develop
 

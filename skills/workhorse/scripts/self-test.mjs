@@ -462,6 +462,67 @@ try {
     throw new Error('workhorse-create.mjs must not overwrite existing files without --force');
   }
 
+  // --- Local storage -------------------------------------------------------------
+  if (runNode(createScript, ['--target', path.join(tempRoot, 'bad3'), '--storage', 'cloud']).status === 0) {
+    throw new Error('workhorse-create.mjs must reject an unknown --storage');
+  }
+  const notGit = path.join(tempRoot, 'not-git');
+  await mkdir(notGit, { recursive: true });
+  if (runNode(createScript, ['--target', notGit, '--storage', 'local']).status === 0) {
+    throw new Error('--storage local must refuse a target outside a git repository');
+  }
+
+  const local = path.join(tempRoot, 'local');
+  await mkdir(local, { recursive: true });
+  await writeFile(path.join(local, 'package.json'), JSON.stringify({ name: 'local-app', scripts: { lint: 'node -e "process.exit(0)"' } }, null, 2));
+  await writeFile(path.join(local, 'CLAUDE.md'), '# Team rules\n\nUse tabs.\n');
+  git(local, ['init', '-q', '-b', 'main']);
+  git(local, ['add', '-A']);
+  git(local, ['commit', '-qm', 'init']);
+
+  const trackedRun = runNode(createScript, ['--target', local, '--storage', 'local', '--agent-file', 'CLAUDE.md']);
+  if (trackedRun.status === 0 || !trackedRun.stderr.includes('CLAUDE.local.md')) {
+    throw new Error(`--storage local must refuse an already-committed agent file and suggest CLAUDE.local.md\n${trackedRun.stderr}`);
+  }
+  if (git(local, ['status', '--porcelain'])) {
+    throw new Error('a refused --storage local run must write nothing');
+  }
+
+  const localRun = runNode(createScript, ['--target', local, '--storage', 'local', '--agent-file', 'CLAUDE.local.md']);
+  if (localRun.status !== 0) throw new Error(`--storage local scaffold failed\n${localRun.stdout}${localRun.stderr}`);
+  const localFeatures = JSON.parse(await readFile(path.join(local, 'feature_list.json'), 'utf8'));
+  if (localFeatures.storage !== 'local') throw new Error('--storage local must record storage: local');
+  if ('storage' in features) throw new Error('default scaffold must leave storage implicit (repo)');
+  if (git(local, ['status', '--porcelain'])) {
+    throw new Error(`local storage must leave the working tree clean (got ${git(local, ['status', '--porcelain'])})`);
+  }
+  if ((await readFile(path.join(local, 'CLAUDE.md'), 'utf8')) !== '# Team rules\n\nUse tabs.\n') {
+    throw new Error('local storage must not touch the committed CLAUDE.md');
+  }
+  const localValidate = runNode(validateScript, ['--target', local]);
+  if (localValidate.status !== 0 || !/Overall: 100\/100/.test(localValidate.stdout)) {
+    throw new Error(`a fresh local-storage harness must validate at 100/100 (scored from CLAUDE.local.md)\n${localValidate.stdout}`);
+  }
+
+  // Re-running keeps one exclude block; upgrade keeps it too.
+  runNode(createScript, ['--target', local, '--storage', 'local', '--agent-file', 'CLAUDE.local.md']);
+  const localUpgrade = runNode(upgradeScript, ['--target', local, '--apply', '--json']);
+  if (localUpgrade.status !== 0 || JSON.parse(localUpgrade.stdout).ok !== true) {
+    throw new Error(`workhorse-upgrade.mjs --apply must succeed on a local-storage harness\n${localUpgrade.stdout}${localUpgrade.stderr}`);
+  }
+  const exclude = await readFile(path.join(local, '.git', 'info', 'exclude'), 'utf8');
+  if (exclude.split('workhorse:local-storage:start').length !== 2 || !exclude.includes('/CLAUDE.local.md')) {
+    throw new Error(`info/exclude must hold exactly one Workhorse block naming the agent file\n${exclude}`);
+  }
+  if (git(local, ['status', '--porcelain'])) throw new Error('upgrade must keep a local-storage harness out of git');
+
+  // A committed harness file breaks local storage.
+  git(local, ['add', '-f', 'feature_list.json']);
+  const leaked = runNode(validateScript, ['--target', local]);
+  if (leaked.status === 0 || !leaked.stdout.includes('harness files are committed')) {
+    throw new Error(`validate must fail when a local-storage harness file is staged or committed\n${leaked.stdout}`);
+  }
+
   // --- Upgrade -------------------------------------------------------------------
   const metadata = await readSkillMetadata();
   const rendered = await renderAgentsFromTemplate({

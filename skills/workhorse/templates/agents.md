@@ -35,7 +35,9 @@ All implementation happens on a **feature branch** — never directly on a prote
 
 One branch covers the whole request (which may span several features and rows). Establish it once, up front; do **not** re-branch per row.
 
-**Uncommitted harness files.** Right after Workhorse is set up, its files (`{{AGENT_FILE_NAME}}`, `feature_list.json`, `progress.md`, `session-handoff.md`, `init.mjs`, `init.sh`, `.harness/`) are usually uncommitted. On the first feature branch, commit them before any feature work as `chore: set up Workhorse harness` (no `Tasks:` trailer). This needs no approval in either mode — the human already asked for the setup — and keeps them out of the feature's own commit. Never commit them to a protected branch.
+**Uncommitted harness files** (storage `repo`, the default). Right after Workhorse is set up, its files (`{{AGENT_FILE_NAME}}`, `feature_list.json`, `progress.md`, `session-handoff.md`, `init.mjs`, `init.sh`, `.harness/`) are usually uncommitted. On the first feature branch, commit them before any feature work as `chore: set up Workhorse harness` (no `Tasks:` trailer). This needs no approval in either mode — the human already asked for the setup — and keeps them out of the feature's own commit. Never commit them to a protected branch.
+
+**Local storage.** When `feature_list.json` has `"storage": "local"`, the harness files are listed in git's `info/exclude` for this clone and never enter git. Skip the `chore: set up Workhorse harness` commit, never `git add -f` a harness file, and never run `git clean` with `-x` or `-X` — it deletes ignored files, and with them every task, plan, and handoff. Everything else is unchanged: rows, plans, `progress.md`, and `Tasks:` trailers work as usual. Teammates can't see the plans, so pull request bodies summarise them instead of linking them (see **Opening the PR**).
 
 **PR target is separate from create base.** Do not infer "branched from X ⇒ PR to X". Feature PRs target `integrationBranch` (resolved at scaffold — see **Pull request**).
 
@@ -490,7 +492,7 @@ Run these with read-only git around them — P.3 already pushed; never commit or
 2. **Ask** (`supervised` only): `Open a pull request? (yes / not yet)`. `not yet`/silence → record `PR status: not opened yet` and stop.
 3. **Target** — `integrationBranch`. Verify `origin/<integrationBranch>` exists (`git fetch --prune`); if it's gone, ask the human and write the new value.
 4. **Title** — the last commit subject, offered for confirmation (`supervised`) or used as-is (`autopilot`) unless the human gave one.
-5. **Body** — features carried (featId + name), their tasks, plan file paths, review verdicts, any behaviour the human accepted unobserved, and any recorded design departures or accessibility changes to the design. Write it to a temp file for `--body-file`.
+5. **Body** — features carried (featId + name), their tasks, plan file paths (with `local` storage, each plan's acceptance criteria in a few lines instead — the files aren't in the repo), review verdicts, any behaviour the human accepted unobserved, and any recorded design departures or accessibility changes to the design. Write it to a temp file for `--body-file`.
 6. **Never** mark draft unless asked; **never** enable auto-merge — merging stays human.
 7. **Record** — `progress.md` → `PR status: opened — PR #<n> → <target> (<url>)`.
 

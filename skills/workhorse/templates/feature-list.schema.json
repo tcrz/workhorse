@@ -169,6 +169,15 @@
       "default": "none",
       "description": "Component library for UI work. 'none' means the project has no component library yet: the first time a request builds UI, the planner asks which to use, recommending the shadcn family in the flavour for the stack, and writes the answer here. 'shadcn' means the shadcn family — shadcn/ui, shadcn-vue, shadcn-svelte, spartan/ui, shadcn-solid, or Basecoat. 'hand-built' means the human opted out of component libraries. Any other value names the library the project already uses (e.g. 'mui'). Detected at scaffold. See .harness/templates/ui-build.md."
     },
+    "storage": {
+      "type": "string",
+      "enum": [
+        "repo",
+        "local"
+      ],
+      "default": "repo",
+      "description": "Where the harness files live, chosen at setup. 'repo' (default; absent means repo) commits them with the project. 'local' lists them in git's per-clone info/exclude so they never reach a commit or pull request; the state stays on this machine only. See AGENTS.md **Branch Discipline** → Local storage."
+    },
     "prHost": {
       "type": "string",
       "enum": [

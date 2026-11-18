@@ -39,7 +39,7 @@ Used standalone (this folder copied into a skills directory), everything still w
 ## First Move
 
 1. Inspect what already exists: instruction files, feature/state files, verification commands, docs, package manifests, git remote.
-2. Ask only for missing context that cannot be inferred safely: target agent file name, approval mode, tolerance for structure, and whether overwriting is allowed.
+2. Ask only for missing context that cannot be inferred safely: target agent file name, approval mode, where the harness files live, tolerance for structure, and whether overwriting is allowed.
 3. Prefer a minimal harness first. Add memory, tool safety, multi-agent, or benchmark details only when the user's problem calls for them.
 
 ## Common Tasks
@@ -51,8 +51,13 @@ Used standalone (this folder copied into a skills directory), everything still w
    - "**Autopilot**: Commit after verification, push at batch checkpoints, and open the PR automatically" → `autopilot`
 
    Hard rails and plan/breakdown approval apply in both modes.
-2. **Confirm the PR target** — default is the remote's default branch (`origin/HEAD`). Mention it and accept an override (e.g. `develop`).
-3. **Run the scaffolder:**
+2. **Ask where the harness files live** — a single-select question, recommended option first. Say what each one means in its description:
+   - "**In the repo**: Tasks, plans, and progress are committed with the code, so teammates and other machines pick up where you left off" (Recommended) → `--storage repo`
+   - "**Local only**: The same files stay on this machine and are never committed. Nothing harness-related shows up in commits or pull requests, but the state lives in this clone only — a fresh clone or another machine starts from scratch" → `--storage local`
+
+   Ask it as its own question, never bundled with the approval mode. Skip it if the user already said. With **Local only**, if the repo already commits an `AGENTS.md` or `CLAUDE.md`, pass `--agent-file CLAUDE.local.md` — Claude Code loads it, and the committed file stays untouched (other agents may not read `CLAUDE.local.md`; say so in one line if the user is on one). The choice is made once, at setup; there's no switching later.
+3. **Confirm the PR target** — default is the remote's default branch (`origin/HEAD`). Mention it and accept an override (e.g. `develop`).
+4. **Run the scaffolder:**
 
 ```bash
 node scripts/workhorse-create.mjs --target /path/to/project --approval-mode supervised
@@ -63,22 +68,23 @@ Options:
 - `--integration-branch <name>` — PR target (default: `origin/HEAD`, else `main`).
 - `--branch-pattern "<pattern>"` — feature branch convention (default `feature/<short-desc>`; placeholders `<short-desc>`, `<username>`).
 - `--pr-host github|gitlab|azure|none` — override PR host detection (default: derived from the origin remote at runtime).
+- `--storage repo|local` — where the harness files live (step 2). `local` lists them in git's `info/exclude` for this clone; it needs a git repository and refuses if any harness file is already committed.
 - `--ui-library none|shadcn|hand-built|<name>` — component library for UI work. Default: the one the project already uses, else `none` — no library yet, so the planner asks at the first UI work, recommending the shadcn flavour for the stack. `hand-built` opts out.
-- `--agent-file CLAUDE.md` for Claude-oriented projects.
+- `--agent-file CLAUDE.md` for Claude-oriented projects; `CLAUDE.local.md` for local storage in a repo that already commits its own instruction file.
 - `--package-manager npm|pnpm|yarn|bun` when detection is wrong.
 - `--commands "cmd one,cmd two"` for custom static checks and builds. Commands that look like builds run only under `--build`.
 - `--force` only after confirming overwrites are acceptable — it resets `feature_list.json` and `progress.md`. Use **Upgrade** for live harnesses.
 
-4. **Check for a browser tool.** The Reviewer can only observe UI behaviour through one. With the Workhorse plugin, the bundled Playwright server provides it — nothing to say. Standalone, confirm one is connected (Playwright MCP, Chrome DevTools MCP).
-5. **Check `init.mjs` yourself** — its `fast` (static checks) and `build` lists should match the project's scripts and CI. Edit them directly if detection missed something. Ask only if you genuinely can't tell.
-6. **Validate** — `node scripts/workhorse-validate.mjs --target /path/to/project`. Fix anything tier-1 before finishing.
-7. **Finish with one short message**, in this shape:
+5. **Check for a browser tool.** The Reviewer can only observe UI behaviour through one. With the Workhorse plugin, the bundled Playwright server provides it — nothing to say. Standalone, confirm one is connected (Playwright MCP, Chrome DevTools MCP).
+6. **Check `init.mjs` yourself** — its `fast` (static checks) and `build` lists should match the project's scripts and CI. Edit them directly if detection missed something. Ask only if you genuinely can't tell.
+7. **Validate** — `node scripts/workhorse-validate.mjs --target /path/to/project`. Fix anything tier-1 before finishing.
+8. **Finish with one short message**, in this shape:
 
    > Workhorse is set up — supervised mode, pull requests target `main`. What would you like to build?
 
-   That's the whole message. Don't recap the files created, explain how the harness works, describe trade-offs, or ask about committing — the harness files are committed automatically with the first feature. Add a sentence only for something that needs the user: validation still failing, or a UI project with no browser tool available.
+   With local storage, add it to the first clause: *"supervised mode, harness files kept local, pull requests target `main`."* That's the whole message. Don't recap the files created, explain how the harness works, describe trade-offs, or ask about committing — with repo storage the harness files are committed automatically with the first feature; with local storage they never are. Add a sentence only for something that needs the user: validation still failing, or a UI project with no browser tool available.
 
-`feature_list.json` ships with `approvalMode`, `integrationBranch`, `branchPattern`, `uiLibrary`, and one placeholder task — the agent replaces it with real tasks as work arrives; humans prompt in natural language.
+`feature_list.json` ships with `approvalMode`, `integrationBranch`, `branchPattern`, `uiLibrary` (plus `"storage": "local"` when chosen), and one placeholder task — the agent replaces it with real tasks as work arrives; humans prompt in natural language.
 
 ### Request triage
 

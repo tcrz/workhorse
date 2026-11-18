@@ -6,6 +6,7 @@ import {
   HAND_BUILT_UI_LIBRARY,
   RECOMMENDED_UI_LIBRARY,
   PR_HOSTS,
+  STORAGE_MODES,
   assertIntegrationBranch,
   buildFeatureList,
   copyTemplate,
@@ -17,18 +18,21 @@ import {
   exists,
   initMjsFromCommands,
   initShWrapper,
+  isGitWorkTree,
   parseArgs,
   readOriginUrl,
   renderVerificationList,
   splitBuildCommands,
+  trackedHarnessFiles,
   verificationCommands,
+  writeLocalExclude,
   writeText
 } from './lib/workhorse-utils.mjs';
 
 const args = parseArgs(process.argv.slice(2));
 
 if (args.help) {
-  console.log(`Usage: node scripts/workhorse-create.mjs [--target DIR] [--approval-mode autopilot|supervised] [--integration-branch NAME] [--branch-pattern PATTERN] [--pr-host github|gitlab|azure|none] [--ui-library none|shadcn|hand-built|NAME] [--agent-file AGENTS.md|CLAUDE.md] [--package-manager npm|pnpm|yarn|bun] [--commands "cmd one,cmd two"] [--force]
+  console.log(`Usage: node scripts/workhorse-create.mjs [--target DIR] [--approval-mode autopilot|supervised] [--integration-branch NAME] [--branch-pattern PATTERN] [--pr-host github|gitlab|azure|none] [--ui-library none|shadcn|hand-built|NAME] [--storage repo|local] [--agent-file AGENTS.md|CLAUDE.md|CLAUDE.local.md] [--package-manager npm|pnpm|yarn|bun] [--commands "cmd one,cmd two"] [--force]
 
 Creates a minimal production harness:
   AGENTS.md or CLAUDE.md
@@ -50,6 +54,11 @@ Options:
                         "none" — no library yet; the planner asks at the first UI work and
                         recommends "${RECOMMENDED_UI_LIBRARY}" (the shadcn family, picked per stack).
                         "${HAND_BUILT_UI_LIBRARY}" opts out of component libraries.
+  --storage             repo (default): harness files are committed with the project.
+                        local: harness files are listed in git's info/exclude for this clone
+                        and never committed. Needs a git repository, and the agent file must
+                        not already be tracked (use CLAUDE.local.md when the repo commits its
+                        own AGENTS.md / CLAUDE.md). Ask the human which they want.
   --pr-host             Override PR host detection. Default: derived from the origin remote at
                         runtime (not written unless passed).
   --commands            Comma-separated static-check and build commands, replacing detection.
@@ -95,8 +104,30 @@ if (prHost && !PR_HOSTS.includes(prHost)) {
 
 const uiLibraryArg = typeof args.uiLibrary === 'string' && args.uiLibrary.trim() ? args.uiLibrary.trim() : '';
 
+const storage = typeof args.storage === 'string' && args.storage.trim() ? args.storage.trim() : 'repo';
+if (!STORAGE_MODES.includes(storage)) {
+  console.error(`Error: --storage must be one of ${STORAGE_MODES.join(', ')} (got "${storage}").`);
+  process.exit(1);
+}
+
 const agentFile = args.agentFile || 'AGENTS.md';
 const force = Boolean(args.force);
+
+// Local storage: refuse before writing anything if the files can't stay out of git.
+if (storage === 'local') {
+  if (!isGitWorkTree(target)) {
+    console.error(`Error: --storage local needs a git repository (${target} is not inside one).`);
+    process.exit(1);
+  }
+  const tracked = trackedHarnessFiles(target, agentFile);
+  if (tracked.length) {
+    console.error(`Error: --storage local keeps harness files out of git, but these are already committed: ${tracked.join(', ')}.`);
+    if (tracked.includes(agentFile)) {
+      console.error('Pass --agent-file CLAUDE.local.md to keep the harness instructions in a separate, uncommitted file.');
+    }
+    process.exit(1);
+  }
+}
 const project = await detectProject(target);
 project.packageManager = detectPackageManager(target, args.packageManager, project.appDir);
 const commands = args.commands
@@ -111,6 +142,13 @@ const uiLibrarySource = uiLibraryArg ? 'flag' : detectedUi.source;
 
 await mkdir(target, { recursive: true });
 
+const results = [];
+if (storage === 'local') {
+  // Excluded before the files exist, so they never show up as untracked.
+  const exclude = await writeLocalExclude(target, agentFile);
+  results.push({ path: exclude.path, status: exclude.changed ? 'written' : 'skipped', reason: exclude.changed ? undefined : 'up to date' });
+}
+
 const replacements = {
   AGENT_FILE_NAME: agentFile,
   PROJECT_PURPOSE: project.stack === 'generic'
@@ -120,7 +158,6 @@ const replacements = {
   PRIMARY_VERIFICATION_COMMAND: 'node init.mjs'
 };
 
-const results = [];
 results.push(await copyTemplate('agents.md', path.join(target, agentFile), replacements, { force }));
 
 const featureListPath = path.join(target, 'feature_list.json');
@@ -130,7 +167,8 @@ if (force || !await exists(featureListPath)) {
     integrationBranch,
     branchPattern,
     uiLibrary,
-    prHost
+    prHost,
+    storage
   }));
   results.push({ path: featureListPath, status: 'written' });
 } else {
@@ -180,6 +218,7 @@ const detectedHost = prHost || detectPrHost(readOriginUrl(target));
 console.log(`Created harness for ${target}`);
 console.log(`Detected stack: ${project.stack}`);
 console.log(`Approval mode: ${approvalMode}`);
+console.log(`Storage: ${storage}${storage === 'local' ? " (harness files listed in git's info/exclude, never committed)" : ' (harness files committed with the project)'}`);
 console.log(`Integration branch: ${integrationBranch} (${integrationBranchSource})`);
 console.log(`Branch pattern: ${branchPattern}`);
 console.log(`UI library: ${uiLibrary} (${uiLibrarySource})`);
