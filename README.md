@@ -26,7 +26,9 @@ Works with any stack the scaffolder can detect (Node/TypeScript, Python, Go, Rus
 
 ## Install
 
-Requires Node.js 18+. The browser server downloads on first use via `npx`; it uses your installed Chrome by default — if you don't have Chrome, the Reviewer can install Playwright's browser through the server's `browser_install` tool.
+Requires Node.js 18+ and Google Chrome. The browser server downloads on first use via `npx` and drives your installed Chrome. Without Chrome, the first browser check fails with *Chromium distribution 'chrome' is not found* — install it with `npx playwright install chrome` and retry.
+
+The server writes console logs, snapshots, and screenshots to `.playwright-mcp/` in the project. Setup keeps that folder out of git: a `/.playwright-mcp/` line in `.gitignore` (committed with the harness), or the `.git/info/exclude` block with local storage.
 
 ### Claude Code
 

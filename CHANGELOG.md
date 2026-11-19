@@ -11,6 +11,11 @@ Every change that should reach installed users gets a version bump here and in `
 - **Cheapest channel per criterion.** Data, persistence, and API outcomes are checked over HTTP or the network log; the browser is for what a user sees and does. On-screen criteria are still observed on screen.
 - **Scoped re-reviews.** After a `fail`, the agent resumes the same Reviewer with the files it changed. The Reviewer re-checks the failed and unconfirmed criteria plus anything the changed files could affect, and carries earlier passes over as `evidence: carried`. A fix that touches shared code (layout, router, store, API client, global styles, config, dependencies) still gets a full review.
 
+### Fixed
+
+- **Browser output no longer shows up in git.** The Playwright server writes console logs, snapshots, and unnamed screenshots to `.playwright-mcp/` in the project. Setup and upgrade now keep it out of git: a `/.playwright-mcp/` line in `.gitignore` with repo storage (committed with the harness, so every clone is covered), or an entry in the `.git/info/exclude` block with local storage.
+- **Browser install instructions.** The README pointed to a `browser_install` tool the bundled server doesn't have. It now says Chrome is required and, if it's missing, to run `npx playwright install chrome` — the same command the server's error message gives.
+
 ### Added
 
 - **`reviewerModel`** in `feature_list.json` (default `inherit`) runs the Reviewer on a different model, e.g. `sonnet`. Set it by saying *"reviewer model: sonnet"*. If the model isn't available, or the tool can't pick a subagent's model, the review runs on the session's model and the agent says so once.

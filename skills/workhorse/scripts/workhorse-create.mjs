@@ -14,6 +14,7 @@ import {
   detectPackageManager,
   detectPrHost,
   detectUiLibrary,
+  ensureBrowserOutputIgnored,
   detectProject,
   exists,
   initMjsFromCommands,
@@ -147,6 +148,9 @@ if (storage === 'local') {
   // Excluded before the files exist, so they never show up as untracked.
   const exclude = await writeLocalExclude(target, agentFile);
   results.push({ path: exclude.path, status: exclude.changed ? 'written' : 'skipped', reason: exclude.changed ? undefined : 'up to date' });
+} else {
+  const ignored = await ensureBrowserOutputIgnored(target);
+  results.push({ path: ignored.path, status: ignored.changed ? 'written' : 'skipped', reason: ignored.changed ? undefined : 'already ignores .playwright-mcp/' });
 }
 
 const replacements = {

@@ -75,7 +75,7 @@ Options:
 - `--commands "cmd one,cmd two"` for custom static checks and builds. Commands that look like builds run only under `--build`.
 - `--force` only after confirming overwrites are acceptable — it resets `feature_list.json` and `progress.md`. Use **Upgrade** for live harnesses.
 
-5. **Check for a browser tool.** The Reviewer can only observe UI behaviour through one. With the Workhorse plugin, the bundled Playwright server provides it — nothing to say. Standalone, confirm one is connected (Playwright MCP, Chrome DevTools MCP).
+5. **Check for a browser tool.** The Reviewer can only observe UI behaviour through one. With the Workhorse plugin, the bundled Playwright server provides it — nothing to say. Standalone, confirm one is connected (Playwright MCP, Chrome DevTools MCP). The bundled server needs Google Chrome; if a browser check fails with *Chromium distribution 'chrome' is not found*, ask the user to run `npx playwright install chrome` — don't install a browser yourself.
 6. **Check `init.mjs` yourself** — its `fast` (static checks) and `build` lists should match the project's scripts and CI. Edit them directly if detection missed something. Ask only if you genuinely can't tell.
 7. **Validate** — `node scripts/workhorse-validate.mjs --target /path/to/project`. Fix anything tier-1 before finishing.
 8. **Finish with one short message**, in this shape:

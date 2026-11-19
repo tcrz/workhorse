@@ -476,6 +476,22 @@ try {
     throw new Error('workhorse-create.mjs must not overwrite existing files without --force');
   }
 
+  // Browser output stays out of git (repo storage: .gitignore, written once).
+  const gitignore = await readFile(path.join(repo, '.gitignore'), 'utf8');
+  if (gitignore.split('/.playwright-mcp/').length !== 2) {
+    throw new Error(`repo storage must ignore /.playwright-mcp/ exactly once in .gitignore (got:\n${gitignore})`);
+  }
+  await mkdir(path.join(repo, '.playwright-mcp'), { recursive: true });
+  await writeFile(path.join(repo, '.playwright-mcp', 'console.log'), 'x');
+  git(repo, ['check-ignore', '-q', '.playwright-mcp/console.log']);
+  const ownIgnore = path.join(tempRoot, 'own-ignore');
+  await mkdir(ownIgnore, { recursive: true });
+  await writeFile(path.join(ownIgnore, '.gitignore'), 'node_modules\n.playwright-mcp\n');
+  runNode(createScript, ['--target', ownIgnore]);
+  if ((await readFile(path.join(ownIgnore, '.gitignore'), 'utf8')) !== 'node_modules\n.playwright-mcp\n') {
+    throw new Error('a .gitignore that already ignores .playwright-mcp must be left alone');
+  }
+
   // --- Local storage -------------------------------------------------------------
   if (runNode(createScript, ['--target', path.join(tempRoot, 'bad3'), '--storage', 'cloud']).status === 0) {
     throw new Error('workhorse-create.mjs must reject an unknown --storage');
@@ -529,6 +545,12 @@ try {
     throw new Error(`info/exclude must hold exactly one Workhorse block naming the agent file\n${exclude}`);
   }
   if (git(local, ['status', '--porcelain'])) throw new Error('upgrade must keep a local-storage harness out of git');
+  if (!exclude.includes('/.playwright-mcp/')) throw new Error('local storage must exclude the browser output folder');
+  await mkdir(path.join(local, '.playwright-mcp'), { recursive: true });
+  await writeFile(path.join(local, '.playwright-mcp', 'page.yml'), 'x');
+  if (git(local, ['status', '--porcelain']) || await readFile(path.join(local, '.gitignore'), 'utf8').catch(() => null) !== null) {
+    throw new Error('local storage must hide browser output without creating a .gitignore');
+  }
 
   // A committed harness file breaks local storage.
   git(local, ['add', '-f', 'feature_list.json']);
