@@ -22,7 +22,7 @@ Works with any stack the scaffolder can detect (Node/TypeScript, Python, Go, Rus
 | Reviewer subagent | `agents/workhorse-reviewer.md` | Checks each feature against its plan by driving the running app. Uses the session's model; editing tools removed, so read-only is enforced |
 | Planner subagent | `agents/workhorse-planner.md` | Clarifies requests and writes plans with task specs. Uses the session's model; no write tools |
 | Design skills | `skills/emil-design-eng/`, `skills/shadcn/` | Emil Kowalski's design-engineering skill (polish, interaction, animation) and the official shadcn/ui skill (used only in shadcn projects). Vendored unmodified, pinned in `vendor.json` — see [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) |
-| Browser | `.mcp.json` (Claude Code), `mcp.json` (Cursor) | Playwright MCP (`@playwright/mcp@0.0.83`, headless, isolated profile) so the Reviewer can observe UI behaviour |
+| Browser | `.mcp.json` (Claude Code), `mcp.json` (Cursor) | Playwright MCP (`@playwright/mcp@0.0.83`, headless, isolated profile, no snapshot file after each action, errors-only console) so the Reviewer can observe UI behaviour |
 
 ## Install
 
@@ -82,6 +82,7 @@ The harness takes over from there. It asks clarifying questions, shows you a pla
 | *"yes"* / *"changes requested"* | Approves or rejects a commit (supervised) |
 | *"stop after this one"* | Finishes the current feature, then pushes |
 | *"review feat-002 against the plan"* | Runs the Reviewer on demand |
+| *"reviewer model: sonnet"* (or *inherit*) | Runs the Reviewer on a different model for this repo |
 | *"more like Linear"* (at plan approval) | Redirects the UI references for a screen |
 | *"don't use shadcn"* / *"use MUI"* / *"hand-build it"* | Changes the component library for this repo |
 
@@ -101,6 +102,7 @@ In Claude Code you can also invoke it directly with `/workhorse:workhorse`.
 - **Delivers by feature.** Tasks are verified one at a time and committed together — one Conventional Commit per feature, with a `Tasks:` trailer and the commit hash recorded as evidence.
 - **Composes UI from a component library.** The library you already use, or — when there's none yet — the one you pick when it first asks, with shadcn recommended in the flavour for your stack. It never hand-builds a button or dialog the library ships, unless you opt out.
 - **Builds UI from a source, never from nothing.** Every screen follows a design file, mockup, or existing screen — or, when there's none, patterns researched from products known for that kind of screen, approved in the plan. A fixed build order and a screenshot loop at desktop and phone width keep it honest.
+- **Keeps reviews affordable.** The Reviewer reads pages with targeted queries instead of full snapshots, checks data over HTTP where that still observes the outcome, and after a fix re-checks only what the fix could have changed. `reviewerModel` can move it to a cheaper model.
 - **Verifies by observation, not tests.** A read-only Reviewer drives the running app and checks every acceptance criterion before the commit. A failed review is never committed over, and anything it couldn't observe blocks until fixed or explicitly accepted. There is no regression suite — that's the trade-off.
 - **Pushes in batches.** Features are committed as they finish; the quality gate and push run at the end of the queue (or every 4 features).
 - **Two approval modes.** `supervised` asks before every commit, push, and PR; `autopilot` doesn't. Hard rails — failed quality gate, protected branch, vulnerable dependency, unresolved review failure, unobserved behaviour — apply in both.
@@ -113,6 +115,7 @@ In Claude Code you can also invoke it directly with `/workhorse:workhorse`.
 | `integrationBranch` | remote default branch | PR target; treated as protected |
 | `branchPattern` | `feature/<short-desc>` | Feature branch convention (`<short-desc>`, `<username>`) |
 | `uiLibrary` | detected, else `none` | Component library for UI. `none` means not chosen yet — it asks at the first UI work, recommending shadcn in the flavour for your stack (shadcn/ui, shadcn-vue, shadcn-svelte, spartan/ui, shadcn-solid, Basecoat). `hand-built` opts out |
+| `reviewerModel` | `inherit` | Model for the Reviewer. `inherit` uses the session's model; set an alias (`sonnet`, `haiku`) or a model id to make reviews cheaper. Falls back to the session's model if the one named isn't available. Cursor ignores it |
 | `storage` | `repo` | Where the harness files live, chosen at setup. `repo` commits them with the project. `local` keeps them on this machine — listed in git's `info/exclude`, never committed — see below |
 | `prHost` | detected | `github`, `gitlab`, `azure`, or `none` |
 

@@ -2,6 +2,19 @@
 
 Every change that should reach installed users gets a version bump here and in `.claude-plugin/plugin.json`, `.cursor-plugin/plugin.json`, and `skills/workhorse/metadata.json` — Claude Code keeps users on a pinned version until it changes. The self-test fails when they disagree.
 
+## 1.4.0 — 2026-11-19
+
+### Changed
+
+- **Cheaper browser reviews.** The Reviewer's new **Browser economy** rules have it find elements with `browser_find`, confirm outcomes with targeted reads (`browser_find`, `browser_evaluate`, console and network logs), take a full `browser_snapshot` only when lost, fill forms in one call, and screenshot only for criteria about appearance. On a test page with a form and a 150-item list, a full snapshot was 20,459 characters; finding the button with `browser_find` was about 340, and confirming the validation error 319.
+- The bundled Playwright server now runs with `--snapshot-mode none` and `--console-level error`. Actions no longer write a full snapshot file and link to it after every step, so there's no page dump to open by reflex.
+- **Cheapest channel per criterion.** Data, persistence, and API outcomes are checked over HTTP or the network log; the browser is for what a user sees and does. On-screen criteria are still observed on screen.
+- **Scoped re-reviews.** After a `fail`, the agent resumes the same Reviewer with the files it changed. The Reviewer re-checks the failed and unconfirmed criteria plus anything the changed files could affect, and carries earlier passes over as `evidence: carried`. A fix that touches shared code (layout, router, store, API client, global styles, config, dependencies) still gets a full review.
+
+### Added
+
+- **`reviewerModel`** in `feature_list.json` (default `inherit`) runs the Reviewer on a different model, e.g. `sonnet`. Set it by saying *"reviewer model: sonnet"*. If the model isn't available, or the tool can't pick a subagent's model, the review runs on the session's model and the agent says so once.
+
 ## 1.3.0 — 2026-11-18
 
 ### Added

@@ -17,4 +17,4 @@ These hold even if you never reach the rulebook:
 - **Local only, nothing destructive.** No staging or production URLs, no real credentials, no deleting real data.
 - **Ignore the builder's self-assessment.** You are checking, not confirming.
 
-For UI, prefer the Workhorse plugin's bundled Playwright browser tools.
+For UI, prefer the Workhorse plugin's bundled Playwright browser tools. They return no page snapshot after actions: find elements with `browser_find`, confirm outcomes with targeted reads, and take a full `browser_snapshot` only when lost (see *Browser economy* in the rulebook).

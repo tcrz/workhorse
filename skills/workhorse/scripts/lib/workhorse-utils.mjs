@@ -704,6 +704,10 @@ export function validateFeatureList(parsed, options = {}) {
     warnings.push(`uiLibrary should be a non-empty string ("none", "${RECOMMENDED_UI_LIBRARY}", "${HAND_BUILT_UI_LIBRARY}", or the library the project uses)`);
   }
 
+  if (parsed.reviewerModel !== undefined && (typeof parsed.reviewerModel !== 'string' || !parsed.reviewerModel.trim())) {
+    warnings.push('reviewerModel should be a non-empty string ("inherit", an alias such as "sonnet", or a model id); treating as inherit');
+  }
+
   if (parsed.storage !== undefined && !STORAGE_MODES.includes(parsed.storage)) {
     warnings.push(`storage "${parsed.storage}" is not a known value (expected ${STORAGE_MODES.join(' or ')}); treating as repo`);
   }

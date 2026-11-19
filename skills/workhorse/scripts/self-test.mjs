@@ -124,6 +124,10 @@ try {
     if (!/@playwright\/mcp@\d+\.\d+\.\d+$/.test(mcp.mcpServers?.playwright?.args?.[1] || '')) {
       throw new Error('the bundled Playwright MCP must be pinned to an exact version');
     }
+    const pwArgs = mcp.mcpServers.playwright.args.join(' ');
+    if (!pwArgs.includes('--snapshot-mode none') || !pwArgs.includes('--console-level error')) {
+      throw new Error('the bundled Playwright MCP must skip per-action page snapshots and return errors-only console output (review token cost)');
+    }
     // Vendored skills match their vendor.json pins and carry their upstream license.
     const vendor = await readJson('vendor.json');
     for (const entry of vendor.skills) {
@@ -266,6 +270,12 @@ try {
   if (!validateFeatureList({ ...base, tasks: [row()] }).warnings.some((w) => /uiLibrary missing/.test(w))) {
     throw new Error('a feature list without uiLibrary must soft-warn');
   }
+  if (!validateFeatureList({ ...base, reviewerModel: '', tasks: [row()] }).warnings.some((w) => /reviewerModel/.test(w))) {
+    throw new Error('an empty reviewerModel must warn');
+  }
+  if (validateFeatureList({ ...base, reviewerModel: 'sonnet', tasks: [row()] }).warnings.some((w) => /reviewerModel/.test(w))) {
+    throw new Error('reviewerModel "sonnet" must be accepted');
+  }
   if (!validateFeatureList({ ...base, prHost: 'bitbucket', tasks: [row()] }).warnings.some((w) => /prHost/.test(w))) {
     throw new Error('an unknown prHost must soft-warn');
   }
@@ -405,6 +415,10 @@ try {
   }
   if (!agents.includes('ask which to use as a **separate** question') || !agents.includes('never bundle the component library')) {
     throw new Error('AGENTS.md must ask the library question separately from visual direction, with shadcn recommended');
+  }
+  if (!agents.includes('**Browser economy.**') || !agents.includes('browser_find') || !agents.includes('**Scoped re-review.**')
+    || !agents.includes('evidence: observed|read|carried') || !agents.includes('`reviewerModel`')) {
+    throw new Error('AGENTS.md must keep reviews cheap: browser economy, scoped re-review with carried evidence, and reviewerModel with fallback');
   }
   if (!agents.includes('Compose from the component library')) {
     throw new Error('AGENTS.md must tell agents to compose from uiLibrary instead of hand-building');
