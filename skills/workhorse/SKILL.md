@@ -75,7 +75,7 @@ Options:
 - `--commands "cmd one,cmd two"` for custom static checks and builds. Commands that look like builds run only under `--build`.
 - `--force` only after confirming overwrites are acceptable — it resets `feature_list.json` and `progress.md`. Use **Upgrade** for live harnesses.
 
-5. **Check for a browser tool.** The Reviewer can only observe UI behaviour through one. With the Workhorse plugin, the bundled Playwright server provides it — nothing to say. Standalone, confirm one is connected (Playwright MCP, Chrome DevTools MCP).
+5. **Check for a browser tool.** The Reviewer can only observe UI behaviour through one. With the Workhorse plugin, the bundled Playwright server provides it — nothing to say. Standalone, confirm one is connected (Playwright MCP, Chrome DevTools MCP). The bundled server needs Google Chrome; if a browser check fails with *Chromium distribution 'chrome' is not found*, ask the user to run `npx playwright install chrome` — don't install a browser yourself.
 6. **Check `init.mjs` yourself** — its `fast` (static checks) and `build` lists should match the project's scripts and CI. Edit them directly if detection missed something. Ask only if you genuinely can't tell.
 7. **Validate** — `node scripts/workhorse-validate.mjs --target /path/to/project`. Fix anything tier-1 before finishing.
 8. **Finish with one short message**, in this shape:
@@ -122,6 +122,8 @@ Trade-off (documented in the README, not something to announce): there is no reg
 ### Independent review
 
 A read-only **Reviewer** subagent is the harness's **only** behaviour check. It runs automatically once per feature (step 4, before the commit) and on request. It checks the work against the plan's acceptance criteria, task objectives, and the project's own conventions, and drives the running app on a dev server to **observe** every behavioural criterion, error paths included — reading code can refute a criterion but never confirm one. A `fail` blocks and is never committed over — it is fixed (cap 2 cycles), the criterion is corrected with the human's agreement, or the feature goes `blocked`. **Unobserved behaviour blocks too**, in both modes, until it is fixed or the human explicitly accepts it. It leaves a trace — `reviewVerdict` (`pass` or `unverified-accepted`) on every row — and the validator fails a `done` feature without one.
+
+Reviews are kept cheap without weakening them. The bundled browser returns no page snapshot after each action, so the Reviewer reads pages with targeted queries and checks data through HTTP calls or the network log where that still observes the outcome. A remediation round re-checks only what the fix could have changed, and falls back to a full review when the fix touched shared code. `reviewerModel` in `feature_list.json` (default `inherit`) can put the Reviewer on a cheaper model; if that model isn't available it falls back to the session's model.
 
 ### Pull request
 

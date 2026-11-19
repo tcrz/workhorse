@@ -169,6 +169,12 @@
       "default": "none",
       "description": "Component library for UI work. 'none' means the project has no component library yet: the first time a request builds UI, the planner asks which to use, recommending the shadcn family in the flavour for the stack, and writes the answer here. 'shadcn' means the shadcn family — shadcn/ui, shadcn-vue, shadcn-svelte, spartan/ui, shadcn-solid, or Basecoat. 'hand-built' means the human opted out of component libraries. Any other value names the library the project already uses (e.g. 'mui'). Detected at scaffold. See .harness/templates/ui-build.md."
     },
+    "reviewerModel": {
+      "type": "string",
+      "minLength": 1,
+      "default": "inherit",
+      "description": "Model for the Reviewer subagent. 'inherit' (default; absent means inherit) uses the session's model. Any other value — an alias such as 'sonnet' or 'haiku', or a full model id — is passed as the model when the Reviewer is spawned; if it isn't available, the agent falls back to the session's model and says so once. Set by the human, never by the agent. See AGENTS.md **Reviewer** → Spawn."
+    },
     "storage": {
       "type": "string",
       "enum": [

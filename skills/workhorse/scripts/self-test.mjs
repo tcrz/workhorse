@@ -124,6 +124,10 @@ try {
     if (!/@playwright\/mcp@\d+\.\d+\.\d+$/.test(mcp.mcpServers?.playwright?.args?.[1] || '')) {
       throw new Error('the bundled Playwright MCP must be pinned to an exact version');
     }
+    const pwArgs = mcp.mcpServers.playwright.args.join(' ');
+    if (!pwArgs.includes('--snapshot-mode none') || !pwArgs.includes('--console-level error')) {
+      throw new Error('the bundled Playwright MCP must skip per-action page snapshots and return errors-only console output (review token cost)');
+    }
     // Vendored skills match their vendor.json pins and carry their upstream license.
     const vendor = await readJson('vendor.json');
     for (const entry of vendor.skills) {
@@ -266,6 +270,12 @@ try {
   if (!validateFeatureList({ ...base, tasks: [row()] }).warnings.some((w) => /uiLibrary missing/.test(w))) {
     throw new Error('a feature list without uiLibrary must soft-warn');
   }
+  if (!validateFeatureList({ ...base, reviewerModel: '', tasks: [row()] }).warnings.some((w) => /reviewerModel/.test(w))) {
+    throw new Error('an empty reviewerModel must warn');
+  }
+  if (validateFeatureList({ ...base, reviewerModel: 'sonnet', tasks: [row()] }).warnings.some((w) => /reviewerModel/.test(w))) {
+    throw new Error('reviewerModel "sonnet" must be accepted');
+  }
   if (!validateFeatureList({ ...base, prHost: 'bitbucket', tasks: [row()] }).warnings.some((w) => /prHost/.test(w))) {
     throw new Error('an unknown prHost must soft-warn');
   }
@@ -406,6 +416,10 @@ try {
   if (!agents.includes('ask which to use as a **separate** question') || !agents.includes('never bundle the component library')) {
     throw new Error('AGENTS.md must ask the library question separately from visual direction, with shadcn recommended');
   }
+  if (!agents.includes('**Browser economy.**') || !agents.includes('browser_find') || !agents.includes('**Scoped re-review.**')
+    || !agents.includes('evidence: observed|read|carried') || !agents.includes('`reviewerModel`')) {
+    throw new Error('AGENTS.md must keep reviews cheap: browser economy, scoped re-review with carried evidence, and reviewerModel with fallback');
+  }
   if (!agents.includes('Compose from the component library')) {
     throw new Error('AGENTS.md must tell agents to compose from uiLibrary instead of hand-building');
   }
@@ -462,6 +476,22 @@ try {
     throw new Error('workhorse-create.mjs must not overwrite existing files without --force');
   }
 
+  // Browser output stays out of git (repo storage: .gitignore, written once).
+  const gitignore = await readFile(path.join(repo, '.gitignore'), 'utf8');
+  if (gitignore.split('/.playwright-mcp/').length !== 2) {
+    throw new Error(`repo storage must ignore /.playwright-mcp/ exactly once in .gitignore (got:\n${gitignore})`);
+  }
+  await mkdir(path.join(repo, '.playwright-mcp'), { recursive: true });
+  await writeFile(path.join(repo, '.playwright-mcp', 'console.log'), 'x');
+  git(repo, ['check-ignore', '-q', '.playwright-mcp/console.log']);
+  const ownIgnore = path.join(tempRoot, 'own-ignore');
+  await mkdir(ownIgnore, { recursive: true });
+  await writeFile(path.join(ownIgnore, '.gitignore'), 'node_modules\n.playwright-mcp\n');
+  runNode(createScript, ['--target', ownIgnore]);
+  if ((await readFile(path.join(ownIgnore, '.gitignore'), 'utf8')) !== 'node_modules\n.playwright-mcp\n') {
+    throw new Error('a .gitignore that already ignores .playwright-mcp must be left alone');
+  }
+
   // --- Local storage -------------------------------------------------------------
   if (runNode(createScript, ['--target', path.join(tempRoot, 'bad3'), '--storage', 'cloud']).status === 0) {
     throw new Error('workhorse-create.mjs must reject an unknown --storage');
@@ -515,6 +545,12 @@ try {
     throw new Error(`info/exclude must hold exactly one Workhorse block naming the agent file\n${exclude}`);
   }
   if (git(local, ['status', '--porcelain'])) throw new Error('upgrade must keep a local-storage harness out of git');
+  if (!exclude.includes('/.playwright-mcp/')) throw new Error('local storage must exclude the browser output folder');
+  await mkdir(path.join(local, '.playwright-mcp'), { recursive: true });
+  await writeFile(path.join(local, '.playwright-mcp', 'page.yml'), 'x');
+  if (git(local, ['status', '--porcelain']) || await readFile(path.join(local, '.gitignore'), 'utf8').catch(() => null) !== null) {
+    throw new Error('local storage must hide browser output without creating a .gitignore');
+  }
 
   // A committed harness file breaks local storage.
   git(local, ['add', '-f', 'feature_list.json']);

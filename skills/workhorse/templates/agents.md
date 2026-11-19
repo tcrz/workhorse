@@ -35,9 +35,9 @@ All implementation happens on a **feature branch** — never directly on a prote
 
 One branch covers the whole request (which may span several features and rows). Establish it once, up front; do **not** re-branch per row.
 
-**Uncommitted harness files** (storage `repo`, the default). Right after Workhorse is set up, its files (`{{AGENT_FILE_NAME}}`, `feature_list.json`, `progress.md`, `session-handoff.md`, `init.mjs`, `init.sh`, `.harness/`) are usually uncommitted. On the first feature branch, commit them before any feature work as `chore: set up Workhorse harness` (no `Tasks:` trailer). This needs no approval in either mode — the human already asked for the setup — and keeps them out of the feature's own commit. Never commit them to a protected branch.
+**Uncommitted harness files** (storage `repo`, the default). Right after Workhorse is set up, its files (`{{AGENT_FILE_NAME}}`, `feature_list.json`, `progress.md`, `session-handoff.md`, `init.mjs`, `init.sh`, `.harness/`, and the `/.playwright-mcp/` line in `.gitignore`) are usually uncommitted. On the first feature branch, commit them before any feature work as `chore: set up Workhorse harness` (no `Tasks:` trailer). This needs no approval in either mode — the human already asked for the setup — and keeps them out of the feature's own commit. Never commit them to a protected branch.
 
-**Local storage.** When `feature_list.json` has `"storage": "local"`, the harness files are listed in git's `info/exclude` for this clone and never enter git. Skip the `chore: set up Workhorse harness` commit, never `git add -f` a harness file, and never run `git clean` with `-x` or `-X` — it deletes ignored files, and with them every task, plan, and handoff. Everything else is unchanged: rows, plans, `progress.md`, and `Tasks:` trailers work as usual. Teammates can't see the plans, so pull request bodies summarise them instead of linking them (see **Opening the PR**).
+**Local storage.** When `feature_list.json` has `"storage": "local"`, the harness files are listed in git's `info/exclude` for this clone and never enter git. Skip the `chore: set up Workhorse harness` commit (the `.playwright-mcp/` browser output is excluded the same way, so `.gitignore` is untouched), never `git add -f` a harness file, and never run `git clean` with `-x` or `-X` — it deletes ignored files, and with them every task, plan, and handoff. Everything else is unchanged: rows, plans, `progress.md`, and `Tasks:` trailers work as usual. Teammates can't see the plans, so pull request bodies summarise them instead of linking them (see **Opening the PR**).
 
 **PR target is separate from create base.** Do not infer "branched from X ⇒ PR to X". Feature PRs target `integrationBranch` (resolved at scaffold — see **Pull request**).
 
@@ -531,7 +531,8 @@ A bare "review this" is ambiguous — ask whether they mean acceptance, PR state
 
 - **Diff** — `git diff HEAD` (all uncommitted work). If the feature already has commits (a remediation from a prior cycle), add `git diff <featureBaseSha>..HEAD`. A clean working tree is not a no-op. Never `git diff <integrationBranch>...HEAD` — it drags in earlier features on the branch.
 - **Criteria** — the plan's `## Acceptance criteria` plus every task's Objectives in `## Task specs`; each task's **How to observe** steps tell the Reviewer how to exercise them. For UI features, also the plan's **UI design** section and the checks under *What the Reviewer checks* in `.harness/templates/ui-build.md` — missing states and accessibility basics are `fail`; structural departures from an approved design fail through their acceptance criteria; recorded **Design departures** are not findings; everything else (cosmetic departures, craft rules) is a `warn` convention finding.
-- **On `fail`** — map failing criteria to rows, reopen them (`verified` → `in-progress`), fix, re-run the fast gate, re-run the review for the feature. `autopilot`: show the first `fail` report before remediating. `supervised`: ask `Fix review findings and re-run? (yes / not yet)`. Cap 2 cycles, then `blocked`. **A `fail` is never committed over** — there is no `push anyway` at review.
+- **On `fail`** — map failing criteria to rows, reopen them (`verified` → `in-progress`), fix, re-run the fast gate, then **resume the same Reviewer** for a scoped re-review (below). `autopilot`: show the first `fail` report before remediating. `supervised`: ask `Fix review findings and re-run? (yes / not yet)`. Cap 2 cycles, then `blocked`. **A `fail` is never committed over** — there is no `push anyway` at review.
+- **Scoped re-review.** A remediation round re-checks only what the fix could have changed. Send the Reviewer the files you changed since its last report and the criteria it reported `fail` or `unconfirmed`. It re-checks those criteria, plus every criterion observed through a changed file — the files its `how` line cites, or the screen, endpoint, or module it was exercised on — and every criterion touching a file the plan's **Files to touch** table connects to a changed file. Earlier `pass` results for everything else carry over as `evidence: carried`. If the fix touched shared code — a layout, router, store, API client, global styles, config, or a dependency — or you can't say which files changed, re-run the full review instead. A re-review after the human changed a criterion re-checks that criterion and anything the scope rule above adds.
 - **Reviewer wrong?** If the human disagrees with a `fail`, the criterion is what's wrong: update the plan's acceptance criteria or task objectives with the human's explicit agreement, note the change in `progress.md`, and re-run the review. Never edit a criterion on your own to make a review pass.
 - **No criteria at all** → nothing can be verified; treat every behaviour as unobserved (below) with the line *"no acceptance criteria available; nothing was verified against"* — never a silent `pass`.
 
@@ -552,8 +553,9 @@ When the review returns behavioural criteria as `unconfirmed` (the app would not
 
 ### Spawn
 
-- **If the `workhorse-reviewer` subagent is available** (Workhorse plugin installed), dispatch it — its editing tools are removed, so read-only is enforced, and it runs on the session's model. Otherwise spawn a general subagent with the visible label `Harness Reviewer` (or `Role: harness-reviewer` in the prompt), and state the read-only rule in the prompt.
+- **If the `workhorse-reviewer` subagent is available** (Workhorse plugin installed), dispatch it — its editing tools are removed, so read-only is enforced. Otherwise spawn a general subagent with the visible label `Harness Reviewer` (or `Role: harness-reviewer` in the prompt), and state the read-only rule in the prompt.
 - **This section is the Reviewer's rulebook.** The subagent reads it from this file itself — don't paste it into the prompt.
+- **Model.** `feature_list.json` → `reviewerModel` sets the Reviewer's model. `inherit` (default, also when absent) uses the session's model. Any other value (`sonnet`, `haiku`, or a full model id) is passed as the model when you spawn the Reviewer. If that spawn fails because the model isn't available, or your tooling can't choose a subagent's model, spawn it on the session's model. Tell the human once in one line (*"Reviewer model `sonnet` isn't available here — reviewing on the session's model"*) and record it in `progress.md` so later reviews in the run skip the retry. Don't change `reviewerModel` yourself. If the human changes it in natural language (`reviewer model: sonnet`), write it into `feature_list.json` and apply it from the next review.
 - Resumable and self-contained; **capture the subagent ID** and resume it for follow-ups instead of re-spawning.
 - **Return early** if it cannot identify criteria — reviewing against guessed criteria produces confident, wrong rows.
 
@@ -581,7 +583,7 @@ Anything failing one rule is dropped — not downgraded, not rephrased as a sugg
 - Unconfirmable criteria get an `unconfirmed` row saying **what you searched and what is missing**.
 - No generic advice ("consider refactoring", "could be clearer").
 
-**Evidence rule:** reading code can **refute** a behavioural criterion; it can never **confirm** one.
+**Evidence rule:** reading code can **refute** a behavioural criterion; it can never **confirm** one. On a scoped re-review, `carried` means *confirmed in the previous round and outside what the fix could change*; its `how` names the round it came from.
 
 | Criterion kind | Confirmed by |
 |---|---|
@@ -593,6 +595,13 @@ Anything failing one rule is dropped — not downgraded, not rephrased as a sugg
 **`limits[]`** — what the review could not check (app didn't start, no acceptance criteria, no browser tool, only a shared-environment config). Limits are about the review; gaps are about the work.
 
 **Behaviour lane:** start the app locally from its documented dev command and drive it as a user would (via a browser tool for UI — the Workhorse plugin bundles Playwright; direct calls for APIs/CLIs). Drive **every** behavioural criterion, including the error and edge cases in each task's How-to-observe steps. Existing test files, if the project has any, are navigation hints, never evidence. **Development server only.** Read console and network output; a DOM node is not proof an asset loaded. **Time-box ~5 minutes**; if the app won't start, record a limit — never fix anything to make it run. Local only, nothing destructive, no exploratory roaming.
+
+**Browser economy.** Page output is the largest cost of a review, so pull only what each criterion needs:
+
+- **Cheapest channel that still observes the outcome.** Use HTTP calls (`curl`) or the browser's network log for data, persistence, and API results. Use the browser for what a user sees and does. A criterion about what's on screen is still observed on screen.
+- **Targeted reads, not page dumps.** The bundled Playwright server returns no page snapshot after actions. Locate elements with `browser_find` (it returns only the matching lines, with refs to click), and confirm outcomes with `browser_find`, `browser_evaluate`, `browser_console_messages`, or `browser_network_requests`. Take a full `browser_snapshot` only when you can't find your way on a page — never after every step. Fill a form with one `browser_fill_form` call.
+- **Screenshots only for criteria about appearance** — layout, phone width, matching a design. Never as routine proof.
+- With another browser tool, the same rule applies: targeted queries over full-page output.
 
 **Budget:** one pass, the feature's diff and touched files, ~40 tool calls (most of them driving the app). No repo-wide crawl. If the criteria won't fit, say which were covered — the rest are unobserved.
 
@@ -609,12 +618,12 @@ criteriaChecked: <total>/<total>
 criteriaClean: <n>
 gaps[]: { criterion, kind: behaviour|evidence|convention, severity: blocker|warn, detail, path, failureScenario|searched, fix }
 limits[]: <omit when empty>
-confirmed[]: { area, criterion, evidence: observed|read, how }
+confirmed[]: { area, criterion, evidence: observed|read|carried, how }
 run?: { status: ran|not-run, how?, why? }
 droppedMinor?: <count>
 ```
 
-**Validate before presenting.** If rows lack evidence, exceed caps, contradict the verdict, a behavioural criterion is `observed` while `run.status` is `not-run`, or the trail is missing — **resume the same subagent** with the specific violation. Never render an unvalidated report.
+**Validate before presenting.** If rows lack evidence, exceed caps, contradict the verdict, a behavioural criterion is `observed` while `run.status` is `not-run`, a `carried` line appears on a first review or for a criterion the scoped re-review had to re-check, or the trail is missing — **resume the same subagent** with the specific violation. Never render an unvalidated report.
 
 **Present** with fixed sections: `VERDICT` (the summary) → `GAPS` (each with its fix) → `LIMITS` (omit if empty) → `COVERAGE`. On a clean `pass`, replace `GAPS` with the full `CONFIRMED` trail, grouped by area past ~8 lines. The Reviewer writes nothing to `progress.md`; save a report to `.harness/reviews/` only when the human asks.
 

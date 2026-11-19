@@ -201,8 +201,27 @@ export const AGENT_FILE_CANDIDATES = ['AGENTS.md', 'CLAUDE.md', 'CLAUDE.local.md
 export const LOCAL_EXCLUDE_START = '# workhorse:local-storage:start';
 export const LOCAL_EXCLUDE_END = '# workhorse:local-storage:end';
 
+// The bundled Playwright server writes console logs, snapshots, and unnamed
+// screenshots here, inside the project it runs in.
+export const BROWSER_OUTPUT_DIR = '.playwright-mcp/';
+
 export function harnessPaths(agentFile) {
-  return [agentFile, 'feature_list.json', 'progress.md', 'session-handoff.md', 'init.mjs', 'init.sh', '.harness/'];
+  return [agentFile, 'feature_list.json', 'progress.md', 'session-handoff.md', 'init.mjs', 'init.sh', '.harness/', BROWSER_OUTPUT_DIR];
+}
+
+// Repo storage: ignore the browser output in the project's .gitignore, which is
+// committed with the harness so every clone that runs reviews is covered.
+export async function ensureBrowserOutputIgnored(target) {
+  const gitignorePath = path.join(target, '.gitignore');
+  const current = existsSync(gitignorePath) ? await readText(gitignorePath) : '';
+  const bare = BROWSER_OUTPUT_DIR.replace(/\/$/, '');
+  const covered = current.split(/\r?\n/).map((line) => line.trim().replace(/^\//, '').replace(/\/$/, ''))
+    .some((line) => line === bare);
+  if (covered) return { path: gitignorePath, changed: false };
+  const separator = current && !current.endsWith('\n') ? '\n' : '';
+  const gap = current.trim() ? '\n' : '';
+  await writeText(gitignorePath, `${current}${separator}${gap}# Workhorse: browser output from Reviewer and UI checks\n/${BROWSER_OUTPUT_DIR}\n`);
+  return { path: gitignorePath, changed: true };
 }
 
 function gitOutput(repoRoot, args) {
@@ -702,6 +721,10 @@ export function validateFeatureList(parsed, options = {}) {
     warnings.push(`uiLibrary missing — set the project's component library ("none" until one is chosen, "${RECOMMENDED_UI_LIBRARY}", "${HAND_BUILT_UI_LIBRARY}", or the library the project uses)`);
   } else if (typeof parsed.uiLibrary !== 'string' || !parsed.uiLibrary.trim()) {
     warnings.push(`uiLibrary should be a non-empty string ("none", "${RECOMMENDED_UI_LIBRARY}", "${HAND_BUILT_UI_LIBRARY}", or the library the project uses)`);
+  }
+
+  if (parsed.reviewerModel !== undefined && (typeof parsed.reviewerModel !== 'string' || !parsed.reviewerModel.trim())) {
+    warnings.push('reviewerModel should be a non-empty string ("inherit", an alias such as "sonnet", or a model id); treating as inherit');
   }
 
   if (parsed.storage !== undefined && !STORAGE_MODES.includes(parsed.storage)) {
@@ -1509,7 +1532,9 @@ export async function buildUpgradePlan(target) {
   if (approvalModeMissing) willChange.push('feature_list.json (approvalMode merge)');
   if (branchPatternMissing) willChange.push(`feature_list.json (branchPattern merge — ${DEFAULT_BRANCH_PATTERN})`);
   if (uiLibraryMissing) willChange.push('feature_list.json (uiLibrary merge — detected library, else none)');
-  if (storage === 'local') willChange.push("git's info/exclude (Workhorse block restored if missing)");
+  willChange.push(storage === 'local'
+    ? "git's info/exclude (Workhorse block restored if missing)"
+    : '.gitignore (/.playwright-mcp/ added if missing)');
   if (integrationBranchMissing) {
     willChange.push('feature_list.json (integrationBranch — from --integration-branch, else origin/HEAD)');
   }

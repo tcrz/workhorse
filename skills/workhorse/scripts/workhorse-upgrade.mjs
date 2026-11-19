@@ -22,6 +22,7 @@ import {
   detectProject,
   detectUiLibrary,
   detectDefaultBranch,
+  ensureBrowserOutputIgnored,
   formatScoreReport,
   loadHarnessFiles,
   mergeApprovalModeIfMissing,
@@ -219,9 +220,13 @@ const uiLibraryMerge = await mergeUiLibraryIfMissing(plan.featureListPath, detec
 actions.push({ step: 'ui-library', merged: uiLibraryMerge.changed, value: uiLibraryMerge.value || uiLibraryMerge.previous });
 
 // Local storage is chosen at setup; upgrades keep it and restore the exclude block.
+// The browser server's output folder stays out of git in both storage modes.
 if (plan.storage === 'local') {
   const exclude = await writeLocalExclude(target, plan.agentFile);
   actions.push({ step: 'local-exclude', path: exclude.path, changed: exclude.changed });
+} else {
+  const ignored = await ensureBrowserOutputIgnored(target);
+  actions.push({ step: 'browser-output-ignore', path: ignored.path, changed: ignored.changed });
 }
 
 let integrationMerge = { changed: false, previous: null };
